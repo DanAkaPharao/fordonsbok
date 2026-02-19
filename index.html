@@ -11,203 +11,526 @@
 </head>
 <body>
     <canvas id="bgCanvas"></canvas>
-
-    <!-- ===================== AUTH SCREEN ===================== -->
+    <!-- Auth Screen -->
     <div id="authScreen">
         <div class="auth-box">
-            <h1>Fordonsbok</h1>
-            <p class="subtitle">Digital Servicehistorik</p>
-
+            <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+                <div data-i18n-selector></div>
+            </div>
+            <h1 data-i18n="app.title">Fordonsbok</h1>
+            <p class="subtitle" data-i18n="app.subtitle">Digital Servicehistorik</p>
+            
             <div class="auth-tabs">
-                <button class="auth-tab active" onclick="switchAuthTab('login')">Logga in</button>
-                <button class="auth-tab" onclick="switchAuthTab('register')">Registrera</button>
+                <button class="auth-tab active" onclick="switchAuthTab('login')" data-i18n="auth.tabLogin">Inloggning</button>
+                <button class="auth-tab" onclick="switchAuthTab('register')" data-i18n="auth.tabRegister">Skapa konto</button>
             </div>
 
             <div id="authError" class="error-message" style="display: none;"></div>
 
-            <!-- Login -->
+            <!-- Login Form -->
             <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
                 <div class="form-group">
-                    <label for="loginEmail">Email</label>
+                    <label data-i18n="auth.labelEmail">Email</label>
                     <input type="email" id="loginEmail" required placeholder="din@email.se">
                 </div>
                 <div class="form-group">
-                    <label for="loginPassword">Lösenord</label>
-                    <input type="password" id="loginPassword" required placeholder="••••••">
+                    <label data-i18n="auth.labelPassword">Lösenord</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
                 </div>
-                <button type="submit" style="width:100%;margin-bottom:10px">Logga in</button>
-                <button type="button" class="secondary" style="width:100%;font-size:0.8rem" onclick="handleForgotPassword()">Glömt lösenord?</button>
+                <div style="text-align: right; margin-bottom: 15px;">
+                    <a href="#" onclick="event.preventDefault(); forgotPassword();" style="color: var(--accent-yellow); font-size: 0.85rem; text-decoration: none;" data-i18n="auth.forgotPassword">Glömt lösenord?</a>
+                </div>
+                <button type="submit" id="loginBtn" data-i18n="auth.loginBtn">Logga in</button>
             </form>
 
-            <!-- Register -->
+            <!-- Register Form -->
             <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
                 <div class="form-group">
-                    <label for="registerEmail">Email</label>
+                    <label data-i18n="auth.labelEmail">Email</label>
                     <input type="email" id="registerEmail" required placeholder="din@email.se">
                 </div>
                 <div class="form-group">
-                    <label for="registerPassword">Lösenord (minst 6 tecken)</label>
-                    <input type="password" id="registerPassword" required placeholder="••••••">
+                    <label data-i18n="auth.labelPasswordMin">Lösenord (minst 6 tecken)</label>
+                    <input type="password" id="registerPassword" required minlength="6" placeholder="••••••••">
                 </div>
                 <div class="form-group">
-                    <label for="registerConfirm">Bekräfta lösenord</label>
-                    <input type="password" id="registerConfirm" required placeholder="••••••">
+                    <label data-i18n="auth.labelConfirmPwd">Bekräfta lösenord</label>
+                    <input type="password" id="registerPasswordConfirm" required minlength="6" placeholder="••••••••">
                 </div>
-                <button type="submit" style="width:100%">Skapa konto</button>
+                <button type="submit" id="registerBtn" data-i18n="auth.registerBtn">Skapa konto</button>
             </form>
         </div>
     </div>
 
-    <!-- ===================== APP SCREEN ===================== -->
+    <!-- App Screen -->
     <div id="appScreen">
         <div class="container">
             <header>
                 <div class="header-left">
-                    <h1>Fordonsbok</h1>
-                    <p class="subtitle">Digital Servicehistorik</p>
+                    <h1 data-i18n="app.title">Fordonsbok</h1>
+                    <p class="subtitle" data-i18n="app.subtitle">Digital Servicehistorik</p>
                 </div>
                 <div class="header-right">
-                    <div class="user-info">Inloggad som: <span class="user-email" id="userEmail"></span></div>
-                    <button class="logout-btn" onclick="handleLogout()">Logga ut</button>
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end;">
+                        <div data-i18n-selector></div>
+                        <div class="user-info">
+                            <span data-i18n="header.loggedInAs">Inloggad som:</span> <span class="user-email" id="userEmail"></span>
+                        </div>
+                    </div>
+                    <button class="logout-btn" onclick="handleLogout()" data-i18n="header.logoutBtn">Logga ut</button>
                 </div>
             </header>
 
             <div class="controls">
-                <button onclick="openAddVehicleModal()">+ Lägg till fordon</button>
-                <button class="secondary" onclick="exportData()">Exportera data</button>
-                <button class="secondary" onclick="openSwishModal()">☕ Köp en kaffe</button>
+                <button onclick="openAddVehicleModal()" data-i18n="controls.addVehicle">+ Lägg till fordon</button>
+                <button class="secondary" onclick="exportData()" data-i18n="controls.exportData">Exportera data</button>
+                <button class="secondary" onclick="openSwish()" style="background: rgba(255,100,0,0.2); border-color: rgba(255,100,0,0.5); color: #ff9d4d;" data-i18n="controls.buyCoffee">☕ Köp en kaffe</button>
             </div>
 
-            <div class="vehicles-grid" id="vehiclesList">
+            <div id="vehiclesContainer" class="vehicles-grid">
                 <div class="loading">Laddar fordon</div>
             </div>
         </div>
     </div>
 
-    <!-- ===================== MODAL: Nytt fordon ===================== -->
-    <div id="vehicleModal" class="modal">
+    <!-- Add Vehicle Modal -->
+    <div id="addVehicleModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="vehicleModalTitle">Nytt Fordon</h2>
-                <button class="close-btn" onclick="closeVehicleModal()">✕</button>
+                <h2>Nytt Fordon</h2>
+                <button class="close-btn" onclick="closeModal('addVehicleModal')">&times;</button>
             </div>
-            <form id="vehicleForm" onsubmit="handleVehicleSubmit(event)">
+            <form id="addVehicleForm" onsubmit="addVehicle(event)">
                 <div class="form-group">
-                    <label for="vehicleReg">Registreringsnummer *</label>
-                    <input type="text" id="vehicleReg" required placeholder="ABC123">
+                    <label>Registreringsnummer *</label>
+                    <input type="text" id="regNumber" required placeholder="ABC123">
                 </div>
                 <div class="form-group">
-                    <label for="vehicleBrand">Märke *</label>
-                    <select id="vehicleBrand" required>
+                    <label>Märke *</label>
+                    <select id="make" required onchange="updateModelOptions()">
                         <option value="">Välj märke</option>
-                        <option>Audi</option><option>BMW</option><option>Citroën</option>
-                        <option>Cupra</option><option>Dacia</option><option>Fiat</option>
-                        <option>Ford</option><option>Honda</option><option>Hyundai</option>
-                        <option>Jaguar</option><option>Jeep</option><option>Kia</option>
-                        <option>Land Rover</option><option>Lexus</option><option>Mazda</option>
-                        <option>Mercedes-Benz</option><option>MINI</option><option>Mitsubishi</option>
-                        <option>Nissan</option><option>Opel</option><option>Peugeot</option>
-                        <option>Polestar</option><option>Porsche</option><option>Renault</option>
-                        <option>Saab</option><option>SEAT</option><option>Škoda</option>
-                        <option>Subaru</option><option>Suzuki</option><option>Tesla</option>
-                        <option>Toyota</option><option>Volkswagen</option><option>Volvo</option>
-                        <option>Annat</option>
+                        <option value="Audi">Audi</option>
+                        <option value="BMW">BMW</option>
+                        <option value="Citroën">Citroën</option>
+                        <option value="Cupra">Cupra</option>
+                        <option value="Dacia">Dacia</option>
+                        <option value="Fiat">Fiat</option>
+                        <option value="Ford">Ford</option>
+                        <option value="Honda">Honda</option>
+                        <option value="Hyundai">Hyundai</option>
+                        <option value="Jaguar">Jaguar</option>
+                        <option value="Jeep">Jeep</option>
+                        <option value="Kia">Kia</option>
+                        <option value="Land Rover">Land Rover</option>
+                        <option value="Lexus">Lexus</option>
+                        <option value="Mazda">Mazda</option>
+                        <option value="Mercedes-Benz">Mercedes-Benz</option>
+                        <option value="MINI">MINI</option>
+                        <option value="Mitsubishi">Mitsubishi</option>
+                        <option value="Nissan">Nissan</option>
+                        <option value="Opel">Opel</option>
+                        <option value="Peugeot">Peugeot</option>
+                        <option value="Polestar">Polestar</option>
+                        <option value="Porsche">Porsche</option>
+                        <option value="Renault">Renault</option>
+                        <option value="Saab">Saab</option>
+                        <option value="SEAT">SEAT</option>
+                        <option value="Škoda">Škoda</option>
+                        <option value="Subaru">Subaru</option>
+                        <option value="Suzuki">Suzuki</option>
+                        <option value="Tesla">Tesla</option>
+                        <option value="Toyota">Toyota</option>
+                        <option value="Volkswagen">Volkswagen</option>
+                        <option value="Volvo">Volvo</option>
+                        <option value="Annat">Annat</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="vehicleModel">Modell</label>
-                    <input type="text" id="vehicleModel" placeholder="t.ex. Golf, 3-serie">
+                    <label>Modell *</label>
+                    <select id="model" required>
+                        <option value="">Välj först ett märke</option>
+                    </select>
+                </div>
+                <div class="form-group" id="customModelGroup" style="display: none;">
+                    <label>Ange modell</label>
+                    <input type="text" id="customModel" placeholder="Skriv modellnamn">
                 </div>
                 <div class="form-group">
-                    <label for="vehicleYear">Årsmodell</label>
-                    <input type="number" id="vehicleYear" placeholder="t.ex. 2020" min="1900" max="2099">
+                    <label>Årsmodell</label>
+                    <input type="number" id="year" placeholder="2020">
                 </div>
                 <div class="form-group">
-                    <label for="vehicleMileage">Miltal (km)</label>
-                    <input type="number" id="vehicleMileage" placeholder="t.ex. 50000">
+                    <label>Färg</label>
+                    <input type="text" id="color" placeholder="Svart">
                 </div>
                 <div class="form-group">
-                    <label for="vehiclePhoto">Foto</label>
-                    <input type="file" id="vehiclePhoto" accept="image/*" onchange="previewPhoto(this)">
-                    <img id="vehiclePhotoPreview" style="display:none;width:100%;margin-top:10px;border:2px solid var(--border)">
+                    <label>Anteckningar</label>
+                    <textarea id="notes" placeholder="Övrig information om fordonet..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="vehicleNotes">Anteckningar</label>
-                    <textarea id="vehicleNotes" placeholder="Övrig info om fordonet..."></textarea>
+                    <label>Foto av fordonet</label>
+                    <input type="file" id="vehiclePhoto" accept="image/*" style="display: none;" onchange="document.getElementById('vehiclePhotoName').textContent = this.files[0]?.name || ''">
+                    <label for="vehiclePhoto" style="display: block; width: 100%; padding: 12px; background: rgba(255,165,0,0.2); border: 2px dashed rgba(255,165,0,0.4); color: var(--accent-yellow); cursor: pointer; font-size: 1rem; text-align: center; border-radius: 5px;">
+                        📷 Välj bild
+                    </label>
+                    <div id="vehiclePhotoName" style="margin-top: 8px; font-size: 0.85rem; color: var(--success);"></div>
+                    <div id="photoPreview" style="margin-top: 10px; display: none;">
+                        <img id="previewImage" style="max-width: 100%; max-height: 200px; border: 2px solid var(--border);" />
+                    </div>
                 </div>
-                <button type="submit" style="width:100%">Spara fordon</button>
+                <button type="submit" id="addVehicleBtn">Spara fordon</button>
             </form>
         </div>
     </div>
 
-    <!-- ===================== MODAL: Servicehistorik ===================== -->
-    <div id="serviceModal" class="modal">
-        <div class="modal-content" style="max-width:700px">
+    <!-- Vehicle Details Modal -->
+    <div id="vehicleDetailsModal" class="modal">
+        <div class="modal-content">
             <div class="modal-header">
-                <h2 id="serviceModalTitle">Servicehistorik</h2>
-                <button class="close-btn" onclick="closeServiceModal()">✕</button>
+                <h2 id="detailsVehicleTitle"></h2>
+                <button class="close-btn" onclick="closeModal('vehicleDetailsModal')" style="font-size: 2rem; padding: 5px 15px; min-width: 50px; min-height: 50px;">&times;</button>
             </div>
-            <button onclick="openAddServiceModal()" style="margin-bottom:20px">+ Lägg till service</button>
-            <div class="service-list" id="serviceList"></div>
+            <button onclick="closeModal('vehicleDetailsModal')" style="width: 100%; padding: 15px; margin-bottom: 15px; background: rgba(255,50,50,0.2); border: 2px solid rgba(255,50,50,0.4); color: #ff6464; font-size: 1.1rem; cursor: pointer;">✕ Stäng servicebok</button>
+            <div id="vehicleDetailsContent"></div>
+            <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
+                <button onclick="openAddServiceModal()">+ Lägg till service</button>
+                <button class="secondary" onclick="shareVehicle()" style="background: rgba(0,150,255,0.2); border-color: rgba(0,150,255,0.5); color: #4db8ff;">🔗 Dela servicebok</button>
+                <button class="secondary" onclick="exportPDF()" style="background: rgba(0,200,100,0.2); border-color: rgba(0,200,100,0.5); color: #00c864;">📄 Exportera PDF</button>
+                <button class="secondary" onclick="openSellVehicleModal()" style="background: rgba(255,50,50,0.2); border-color: rgba(255,50,50,0.5); color: #ff6464;">🤝 Sälj / Överlåt</button>
+            </div>
+            <div id="shareResult" style="display:none; margin-top: 15px; padding: 15px; background: rgba(0,150,255,0.1); border: 1px solid rgba(0,150,255,0.3); font-size: 0.85rem;">
+                <p style="margin-bottom: 8px; color: #4db8ff;">🔗 Delningslänk (giltig 30 dagar):</p>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <input id="shareUrl" type="text" readonly style="flex: 1; font-size: 0.75rem; padding: 8px; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(0,150,255,0.3);">
+                    <button onclick="copyShareLink()" style="padding: 8px 12px; font-size: 0.75rem; width: auto; clip-path: none;">Kopiera</button>
+                </div>
+                <p style="margin-top: 8px; color: var(--text-secondary); font-size: 0.75rem;">Mottagaren kan se serviceboken utan att logga in. Länken låser inte boken.</p>
+            </div>
+            <div class="service-list">
+                <h3 style="margin-bottom: 20px; color: var(--accent-yellow);">Servicehistorik</h3>
+                <div id="serviceListContainer"></div>
+            </div>
+            <div style="margin-top: 30px; text-align: center;">
+                <button onclick="closeModal('vehicleDetailsModal')" style="padding: 12px 40px; background: rgba(100,100,100,0.3); border-color: rgba(150,150,150,0.5); color: white;">← Tillbaka</button>
+            </div>
         </div>
     </div>
 
-    <!-- ===================== MODAL: Lägg till service ===================== -->
+    <!-- Sell Vehicle Modal -->
+    <div id="sellVehicleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🤝 Sälj / Överlåt fordon</h2>
+                <button class="close-btn" onclick="closeModal('sellVehicleModal')">&times;</button>
+            </div>
+            <div style="background: rgba(255,50,50,0.1); border: 1px solid rgba(255,50,50,0.3); padding: 15px; margin-bottom: 20px; font-size: 0.85rem;">
+                <strong style="color: #ff6464;">⚠️ OBS! Detta kan inte ångras!</strong><br>
+                <span style="color: var(--text-secondary);">All befintlig servicehistorik låses permanent. Ny ägare kan inte ändra eller ta bort historiken - bara lägga till nya poster.</span>
+            </div>
+            <div class="form-group">
+                <label>Ny ägares e-postadress</label>
+                <input type="email" id="newOwnerEmail" placeholder="nyagare@email.se (lämna tomt om okänd)">
+                <p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 5px;">Lämna tomt om du sålt bilen men köparen inte använder Fordonsbok.</p>
+            </div>
+            <div class="form-group">
+                <label>Överlåtelsedatum *</label>
+                <input type="date" id="transferDate" required>
+            </div>
+            <div class="form-group">
+                <label>Försäljningspris (kr)</label>
+                <input type="number" id="transferPrice" placeholder="250000">
+            </div>
+            <div class="form-group">
+                <label>Meddelande till ny ägare</label>
+                <textarea id="transferNote" placeholder="T.ex. servicar nyligen utförda, kända fel..."></textarea>
+            </div>
+            <button id="confirmSellBtn" onclick="sellVehicle()" style="background: rgba(255,50,50,0.3); border-color: rgba(255,50,50,0.6);">🤝 Bekräfta överlåtelse</button>
+        </div>
+    </div>
+
+    <!-- Read-only share view (shown when visiting share link) -->
+    <div id="shareViewScreen" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background: var(--bg-main); z-index: 9999; overflow-y: auto; padding: 20px;">
+        <div style="max-width: 800px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="font-family: 'Archivo Black'; font-size: 2rem; background: linear-gradient(135deg, var(--primary), var(--accent-yellow)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">FORDONSBOK</h1>
+                <p style="color: var(--text-secondary); font-size: 0.8rem;">👁️ Skrivskyddad vy - delad servicebok</p>
+            </div>
+            <div id="shareViewContent"></div>
+            <div style="text-align: center; margin-top: 30px; padding: 20px; border: 1px solid var(--border);">
+                <p style="color: var(--text-secondary); font-size: 0.85rem;">Vill du spara din egen servicebok?</p>
+                <a href="/" style="color: var(--primary);">Registrera dig gratis →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Vehicle Modal -->
+    <div id="editVehicleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-i18n="editVehicle.modalTitle">Redigera Fordon</h2>
+                <button class="close-btn" onclick="closeModal('editVehicleModal')">&times;</button>
+            </div>
+            <form id="editVehicleForm" onsubmit="updateVehicle(event)">
+                <input type="hidden" id="editVehicleId">
+                <div class="form-group">
+                    <label>Registreringsnummer *</label>
+                    <input type="text" id="editRegNumber" required placeholder="ABC123">
+                </div>
+                <div class="form-group">
+                    <label>Märke *</label>
+                    <select id="editMake" required onchange="updateEditModelOptions()">
+                        <option value="">Välj märke</option>
+                        <option value="Audi">Audi</option>
+                        <option value="BMW">BMW</option>
+                        <option value="Citroën">Citroën</option>
+                        <option value="Cupra">Cupra</option>
+                        <option value="Dacia">Dacia</option>
+                        <option value="Fiat">Fiat</option>
+                        <option value="Ford">Ford</option>
+                        <option value="Honda">Honda</option>
+                        <option value="Hyundai">Hyundai</option>
+                        <option value="Jaguar">Jaguar</option>
+                        <option value="Jeep">Jeep</option>
+                        <option value="Kia">Kia</option>
+                        <option value="Land Rover">Land Rover</option>
+                        <option value="Lexus">Lexus</option>
+                        <option value="Mazda">Mazda</option>
+                        <option value="Mercedes-Benz">Mercedes-Benz</option>
+                        <option value="MINI">MINI</option>
+                        <option value="Mitsubishi">Mitsubishi</option>
+                        <option value="Nissan">Nissan</option>
+                        <option value="Opel">Opel</option>
+                        <option value="Peugeot">Peugeot</option>
+                        <option value="Polestar">Polestar</option>
+                        <option value="Porsche">Porsche</option>
+                        <option value="Renault">Renault</option>
+                        <option value="Saab">Saab</option>
+                        <option value="SEAT">SEAT</option>
+                        <option value="Škoda">Škoda</option>
+                        <option value="Subaru">Subaru</option>
+                        <option value="Suzuki">Suzuki</option>
+                        <option value="Tesla">Tesla</option>
+                        <option value="Toyota">Toyota</option>
+                        <option value="Volkswagen">Volkswagen</option>
+                        <option value="Volvo">Volvo</option>
+                        <option value="Annat">Annat</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Modell *</label>
+                    <select id="editModel" required>
+                        <option value="">Välj först ett märke</option>
+                    </select>
+                </div>
+                <div class="form-group" id="editCustomModelGroup" style="display: none;">
+                    <label data-i18n="addVehicle.labelCustomModel">Ange modell</label>
+                    <input type="text" id="editCustomModel" placeholder="Skriv modellnamn">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="addVehicle.labelYear">Årsmodell</label>
+                    <input type="number" id="editYear" placeholder="2020">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="addVehicle.labelColor">Färg</label>
+                    <input type="text" id="editColor" placeholder="Svart">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="addVehicle.labelNotes">Anteckningar</label>
+                    <textarea id="editNotes" placeholder="Övrig information om fordonet..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="addVehicle.labelPhoto">Foto av fordonet</label>
+                    <div id="editCurrentPhoto" style="margin-bottom: 10px;"></div>
+                    <input type="file" id="editVehiclePhoto" accept="image/*" style="display: none;" onchange="document.getElementById('editVehiclePhotoName').textContent = this.files[0]?.name || ''">
+                    <label for="editVehiclePhoto" style="display: block; width: 100%; padding: 12px; background: rgba(255,165,0,0.2); border: 2px dashed rgba(255,165,0,0.4); color: var(--accent-yellow); cursor: pointer; font-size: 1rem; text-align: center; border-radius: 5px;">
+                        <span data-i18n="editVehicle.changePhoto">📷 Välj ny bild</span>
+                    </label>
+                    <div id="editVehiclePhotoName" style="margin-top: 8px; font-size: 0.85rem; color: var(--success);"></div>
+                    <div id="editPhotoPreview" style="margin-top: 10px; display: none;">
+                        <img id="editPreviewImage" style="max-width: 100%; max-height: 200px; border: 2px solid var(--border);" />
+                    </div>
+                </div>
+                <button type="submit" id="updateVehicleBtn" data-i18n="editVehicle.submitBtn">Uppdatera fordon</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Service Modal -->
     <div id="addServiceModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Ny Servicepost</h2>
-                <button class="close-btn" onclick="closeAddServiceModal()">✕</button>
+                <h2 data-i18n="addService.modalTitle">Ny Service</h2>
+                <button class="close-btn" onclick="closeModal('addServiceModal')">&times;</button>
             </div>
-            <form id="serviceForm" onsubmit="handleServiceSubmit(event)">
+            <form id="addServiceForm" onsubmit="addService(event)">
                 <div class="form-group">
-                    <label for="serviceTitle">Titel *</label>
-                    <input type="text" id="serviceTitle" required placeholder="t.ex. Oljebyte, Däckbyte">
+                    <label data-i18n="addService.labelDate">Datum *</label>
+                    <input type="date" id="serviceDate" required>
                 </div>
                 <div class="form-group">
-                    <label for="serviceDate">Datum</label>
-                    <input type="date" id="serviceDate">
+                    <label data-i18n="addService.labelType">Typ av service *</label>
+                    <select id="serviceType" required>
+                        <option value="">Välj typ</option>
+                        <option value="Ordinarie service">Ordinarie service</option>
+                        <option value="Stora servicen">Stora servicen</option>
+                        <option value="Oljebyte">Oljebyte</option>
+                        <option value="Oljepåfyllning">Oljepåfyllning</option>
+                        <option value="Bromsar">Bromsar</option>
+                        <option value="Bromsvätsketoppning">Bromsvätsketoppning</option>
+                        <option value="Däck">Däck</option>
+                        <option value="Däckbyte">Däckbyte (sommar/vinter)</option>
+                        <option value="Batteribyte">Batteribyte</option>
+                        <option value="Glödlampor">Glödlampor</option>
+                        <option value="Luftfilter">Luftfilter</option>
+                        <option value="Kupéfilter">Kupéfilter</option>
+                        <option value="Spolarvätska">Spolarvätska</option>
+                        <option value="Kylvätska">Kylvätska</option>
+                        <option value="Torkarblad">Torkarblad</option>
+                        <option value="Reparation">Reparation</option>
+                        <option value="Besiktning">Besiktning</option>
+                        <option value="Tvätt/vård">Tvätt/vård</option>
+                        <option value="Övrigt">Övrigt</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label for="serviceMileage">Miltal vid service (km)</label>
-                    <input type="number" id="serviceMileage" placeholder="t.ex. 55000">
+                    <label data-i18n="addService.labelMileage">Mätarställning (km)</label>
+                    <input type="number" id="mileage" placeholder="15000">
                 </div>
                 <div class="form-group">
-                    <label for="serviceWorkshop">Verkstad</label>
-                    <input type="text" id="serviceWorkshop" placeholder="t.ex. Volvo Sundsvall">
+                    <label data-i18n="addService.labelPerformedBy">Utfört av *</label>
+                    <select id="performedBy" required onchange="toggleWorkshopField()">
+                        <option value="">Välj</option>
+                        <option value="self" data-i18n="addService.selfOption">Själv (eget arbete)</option>
+                        <option value="workshop" data-i18n="addService.workshopOption">Verkstad</option>
+                    </select>
+                </div>
+                <div class="form-group" id="workshopGroup" style="display: none;">
+                    <label data-i18n="addService.labelWorkshop">Verkstad</label>
+                    <input type="text" id="workshop" placeholder="Bilverkstan AB">
                 </div>
                 <div class="form-group">
-                    <label for="serviceCost">Kostnad (kr)</label>
-                    <input type="number" id="serviceCost" placeholder="t.ex. 2500">
+                    <label data-i18n="addService.labelCost">Kostnad (kr)</label>
+                    <input type="number" id="cost" placeholder="2500">
                 </div>
                 <div class="form-group">
-                    <label for="serviceNotes">Anteckningar</label>
-                    <textarea id="serviceNotes" placeholder="Vad gjordes? Delar som byttes etc."></textarea>
+                    <label data-i18n="addService.labelNotes">Anteckningar</label>
+                    <textarea id="serviceNotes" placeholder="Beskrivning av utförd service..."></textarea>
                 </div>
-                <button type="submit" style="width:100%">Spara servicepost</button>
+                <div class="form-group">
+                    <label data-i18n="addService.labelReceipt">Ladda upp kvitto (bild/PDF)</label>
+                    <input type="file" id="serviceReceipt" accept="image/*,.pdf" style="display: none;" onchange="document.getElementById('serviceReceiptName').textContent = this.files[0]?.name || ''">
+                    <label for="serviceReceipt" style="display: block; width: 100%; padding: 12px; background: rgba(255,165,0,0.2); border: 2px dashed rgba(255,165,0,0.4); color: var(--accent-yellow); cursor: pointer; font-size: 1rem; text-align: center; border-radius: 5px;">
+                        <span data-i18n="addService.chooseReceipt">🧾 Välj kvitto</span>
+                    </label>
+                    <div id="serviceReceiptName" style="margin-top: 8px; font-size: 0.85rem; color: var(--success);"></div>
+                    <div id="receiptPreview" style="margin-top: 10px; display: none;">
+                        <img id="receiptPreviewImage" style="max-width: 100%; max-height: 150px; border: 2px solid var(--border);" />
+                    </div>
+                </div>
+                <button type="submit" id="addServiceBtn" data-i18n="addService.submitBtn">Spara service</button>
             </form>
         </div>
     </div>
 
-    <!-- ===================== MODAL: Swish ===================== -->
-    <div id="swishModal" class="modal">
-        <div class="modal-content swish-modal-content" style="max-width:400px;text-align:center">
+    <!-- Edit Service Modal -->
+    <div id="editServiceModal" class="modal">
+        <div class="modal-content">
             <div class="modal-header">
-                <h2>☕ Köp en kaffe</h2>
-                <button class="close-btn" onclick="closeSwishModal()">✕</button>
+                <h2 data-i18n="editService.modalTitle">Redigera Service</h2>
+                <button class="close-btn" onclick="closeModal('editServiceModal')">&times;</button>
             </div>
-            <p style="color:var(--text-secondary);margin-bottom:20px">Gillar du appen? Bjud mig på en kaffe via Swish!</p>
-            <!-- Ersätt swish-qr.png med din QR-bild uppladdad i GitHub-repot -->
-            <img src="swish-QR-large.png" alt="Swish QR-kod" class="swish-qr">
-            <div class="swish-number">123-456 78 90</div>
-            <p class="swish-description">Tack för ditt stöd! ❤️</p>
+            <form id="editServiceForm" onsubmit="updateService(event)">
+                <input type="hidden" id="editServiceId">
+                <div class="form-group">
+                    <label data-i18n="editService.labelDate">Datum *</label>
+                    <input type="date" id="editServiceDate">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="editService.labelType">Typ av service *</label>
+                    <select id="editServiceType">
+                        <option value="">Välj typ</option>
+                        <option value="Ordinarie service">Ordinarie service</option>
+                        <option value="Stora servicen">Stora servicen</option>
+                        <option value="Oljebyte">Oljebyte</option>
+                        <option value="Oljepåfyllning">Oljepåfyllning</option>
+                        <option value="Bromsar">Bromsar</option>
+                        <option value="Bromsvätsketoppning">Bromsvätsketoppning</option>
+                        <option value="Däck">Däck</option>
+                        <option value="Däckbyte">Däckbyte (sommar/vinter)</option>
+                        <option value="Batteribyte">Batteribyte</option>
+                        <option value="Glödlampor">Glödlampor</option>
+                        <option value="Luftfilter">Luftfilter</option>
+                        <option value="Kupéfilter">Kupéfilter</option>
+                        <option value="Spolarvätska">Spolarvätska</option>
+                        <option value="Kylvätska">Kylvätska</option>
+                        <option value="Torkarblad">Torkarblad</option>
+                        <option value="Reparation">Reparation</option>
+                        <option value="Besiktning">Besiktning</option>
+                        <option value="Tvätt/vård">Tvätt/vård</option>
+                        <option value="Övrigt">Övrigt</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="editService.labelMileage">Mätarställning (km)</label>
+                    <input type="number" id="editServiceMileage" placeholder="15000">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="editService.labelPerformedBy">Utfört av *</label>
+                    <select id="editPerformedBy" onchange="toggleEditWorkshopField()">
+                        <option value="">Välj</option>
+                        <option value="self" data-i18n="editService.selfOption">Själv (eget arbete)</option>
+                        <option value="workshop" data-i18n="editService.workshopOption">Verkstad</option>
+                    </select>
+                </div>
+                <div class="form-group" id="editWorkshopGroup" style="display: none;">
+                    <label data-i18n="editService.labelWorkshop">Verkstad</label>
+                    <input type="text" id="editWorkshop" placeholder="Bilverkstan AB">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="editService.labelCost">Kostnad (kr)</label>
+                    <input type="number" id="editServiceCost" placeholder="2500">
+                </div>
+                <div class="form-group">
+                    <label data-i18n="editService.labelNotes">Anteckningar</label>
+                    <textarea id="editServiceNotes" placeholder="Beskrivning av utförd service..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label data-i18n="editService.labelNewReceipt">Ladda upp nytt kvitto (ersätter befintligt)</label>
+                    <div id="editCurrentReceipt" style="margin-bottom: 10px;"></div>
+                    <input type="file" id="editServiceReceipt" accept="image/*,.pdf" style="display: none;" onchange="document.getElementById('editServiceReceiptName').textContent = this.files[0]?.name || ''">
+                    <label for="editServiceReceipt" style="display: block; width: 100%; padding: 12px; background: rgba(255,165,0,0.2); border: 2px dashed rgba(255,165,0,0.4); color: var(--accent-yellow); cursor: pointer; font-size: 1rem; text-align: center; border-radius: 5px;">
+                        <span data-i18n="editService.chooseNewReceipt">🧾 Välj nytt kvitto</span>
+                    </label>
+                    <div id="editServiceReceiptName" style="margin-top: 8px; font-size: 0.85rem; color: var(--success);"></div>
+                    <div id="editReceiptPreview" style="margin-top: 10px; display: none;">
+                        <img id="editReceiptPreviewImage" style="max-width: 100%; max-height: 150px; border: 2px solid var(--border);" />
+                    </div>
+                </div>
+                <button type="button" id="updateServiceBtn" onclick="updateService(event)" style="width: 100%; margin-top: 10px;" data-i18n="editService.updateBtn">Uppdatera service</button>
+            </form>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="script.js"></script>
+    <!-- Receipt Viewer Modal -->
+    <div id="receiptModal" class="modal">
+        <div class="modal-content" style="max-width: 90%; max-height: 90vh;">
+            <div class="modal-header">
+                <h2>🧾 Kvitto</h2>
+                <button class="close-btn" onclick="closeModal('receiptModal')">&times;</button>
+            </div>
+            <div style="overflow: auto; max-height: 75vh;">
+                <img id="receiptImage" style="max-width: 100%; height: auto;" />
+                <iframe id="receiptPDF" style="width: 100%; height: 70vh; border: none; display: none;"></iframe>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Firebase SDK (modular) -->
+    <script type="module" src="script.js"></script>
+    <!-- i18n + currency selector (must be module, loaded before script.js uses it) -->
+    <script type="module" src="LanguageCurrencySelector.js"></script>
+    <!-- Background canvas animation -->
+    <script src="canvas.js"></script>
 </body>
 </html>
