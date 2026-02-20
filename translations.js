@@ -330,8 +330,24 @@ const translations = {
             languageLabel: 'Språk',
             currencyLabel: 'Valuta',
         },
-    },
 
+        vehicleTypes: {
+            car:        'Personbil',
+            suv:        'SUV / Crossover',
+            van:        'Skåpbil / Minibuss',
+            truck:      'Lastbil',
+            mc:         'MC / Motorcykel',
+            moped:      'Moped / Scooter',
+            atv:        'ATV / Fyrhjuling',
+            snowmobile: 'Snöskoter',
+            boat:       'Båt / Vattenskoter',
+            caravan:    'Husvagn',
+            motorhome:  'Husbil',
+            trailer:    'Släpkärra / Trailer',
+            tractor:    'Traktor / Arbetsfordon',
+            other:      'Annat',
+        },
+    },
 
     // ─── English (GB) ─────────────────────────────────────────────────────────
     'en-GB': {
@@ -639,6 +655,23 @@ const translations = {
             title:         'Settings',
             languageLabel: 'Language',
             currencyLabel: 'Currency',
+        },
+
+        vehicleTypes: {
+            car:        'Car',
+            suv:        'SUV / Crossover',
+            van:        'Van / Minibus',
+            truck:      'Truck / Lorry',
+            mc:         'Motorcycle',
+            moped:      'Moped / Scooter',
+            atv:        'ATV / Quad',
+            snowmobile: 'Snowmobile',
+            boat:       'Boat / Jet Ski',
+            caravan:    'Caravan',
+            motorhome:  'Motorhome',
+            trailer:    'Trailer',
+            tractor:    'Tractor / Work Vehicle',
+            other:      'Other',
         },
     },
 };

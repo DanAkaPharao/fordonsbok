@@ -101,60 +101,42 @@
                 <button class="close-btn" onclick="closeModal('addVehicleModal')">&times;</button>
             </div>
             <form id="addVehicleForm" onsubmit="addVehicle(event)">
+                <input type="hidden" id="vehicleType" value="car">
+
+                <div class="form-group">
+                    <label>Fordonstyp *</label>
+                    <div id="vehicleTypeSelector" class="vehicle-type-selector"></div>
+                </div>
+
                 <div class="form-group">
                     <label>Registreringsnummer *</label>
                     <input type="text" id="regNumber" required placeholder="ABC123">
                 </div>
+
                 <div class="form-group">
                     <label>Märke *</label>
-                    <select id="make" required onchange="updateModelOptions()">
-                        <option value="">Välj märke</option>
-                        <option value="Audi">Audi</option>
-                        <option value="BMW">BMW</option>
-                        <option value="Citroën">Citroën</option>
-                        <option value="Cupra">Cupra</option>
-                        <option value="Dacia">Dacia</option>
-                        <option value="Fiat">Fiat</option>
-                        <option value="Ford">Ford</option>
-                        <option value="Honda">Honda</option>
-                        <option value="Hyundai">Hyundai</option>
-                        <option value="Jaguar">Jaguar</option>
-                        <option value="Jeep">Jeep</option>
-                        <option value="Kia">Kia</option>
-                        <option value="Land Rover">Land Rover</option>
-                        <option value="Lexus">Lexus</option>
-                        <option value="Mazda">Mazda</option>
-                        <option value="Mercedes-Benz">Mercedes-Benz</option>
-                        <option value="MINI">MINI</option>
-                        <option value="Mitsubishi">Mitsubishi</option>
-                        <option value="Nissan">Nissan</option>
-                        <option value="Opel">Opel</option>
-                        <option value="Peugeot">Peugeot</option>
-                        <option value="Polestar">Polestar</option>
-                        <option value="Porsche">Porsche</option>
-                        <option value="Renault">Renault</option>
-                        <option value="Saab">Saab</option>
-                        <option value="SEAT">SEAT</option>
-                        <option value="Škoda">Škoda</option>
-                        <option value="Subaru">Subaru</option>
-                        <option value="Suzuki">Suzuki</option>
-                        <option value="Tesla">Tesla</option>
-                        <option value="Toyota">Toyota</option>
-                        <option value="Volkswagen">Volkswagen</option>
-                        <option value="Volvo">Volvo</option>
-                        <option value="Annat">Annat</option>
-                    </select>
+                    <div class="search-input-wrapper">
+                        <input type="text" id="makeSearch" placeholder="Sök märke..." autocomplete="off">
+                        <div id="makeSearchDropdown" class="search-dropdown"></div>
+                    </div>
                 </div>
+                <div class="form-group" id="customMakeGroup" style="display: none;">
+                    <label>Ange märke</label>
+                    <input type="text" id="customMake" placeholder="Skriv märkesnamn">
+                </div>
+
                 <div class="form-group">
                     <label>Modell *</label>
-                    <select id="model" required>
-                        <option value="">Välj först ett märke</option>
-                    </select>
+                    <div class="search-input-wrapper">
+                        <input type="text" id="modelSearch" placeholder="Välj märke först..." autocomplete="off" disabled>
+                        <div id="modelSearchDropdown" class="search-dropdown"></div>
+                    </div>
                 </div>
                 <div class="form-group" id="customModelGroup" style="display: none;">
                     <label>Ange modell</label>
                     <input type="text" id="customModel" placeholder="Skriv modellnamn">
                 </div>
+
                 <div class="form-group">
                     <label>Årsmodell</label>
                     <input type="number" id="year" placeholder="2020">
@@ -192,12 +174,7 @@
             </div>
             <button onclick="closeModal('vehicleDetailsModal')" style="width: 100%; padding: 15px; margin-bottom: 15px; background: rgba(255,50,50,0.2); border: 2px solid rgba(255,50,50,0.4); color: #ff6464; font-size: 1.1rem; cursor: pointer;"><span data-i18n="vehicleDetails.closeBtn">✕ Stäng servicebok</span></button>
             <div id="vehicleDetailsContent"></div>
-            <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
-                <button onclick="openAddServiceModal()"><span data-i18n="vehicleDetails.addServiceBtn">+ Lägg till service</span></button>
-                <button class="secondary" onclick="shareVehicle()" style="background: rgba(0,150,255,0.2); border-color: rgba(0,150,255,0.5); color: #4db8ff;"><span data-i18n="vehicleDetails.shareBtn">🔗 Dela servicebok</span></button>
-                <button class="secondary" onclick="exportPDF()" style="background: rgba(0,200,100,0.2); border-color: rgba(0,200,100,0.5); color: #00c864;"><span data-i18n="vehicleDetails.exportPDFBtn">📄 Exportera PDF</span></button>
-                <button class="secondary" onclick="openSellVehicleModal()" style="background: rgba(255,50,50,0.2); border-color: rgba(255,50,50,0.5); color: #ff6464;"><span data-i18n="vehicleDetails.sellBtn">🤝 Sälj / Överlåt</span></button>
-            </div>
+            <div id="vehicleActionButtons" style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px;"></div>
             <div id="shareResult" style="display:none; margin-top: 15px; padding: 15px; background: rgba(0,150,255,0.1); border: 1px solid rgba(0,150,255,0.3); font-size: 0.85rem;">
                 <p style="margin-bottom: 8px; color: #4db8ff;"><span data-i18n="vehicleDetails.shareLabel">🔗 Delningslänk (giltig 30 dagar):</span></p>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -272,55 +249,36 @@
             </div>
             <form id="editVehicleForm" onsubmit="updateVehicle(event)">
                 <input type="hidden" id="editVehicleId">
+                <input type="hidden" id="editVehicleType" value="car">
+
+                <div class="form-group">
+                    <label>Fordonstyp *</label>
+                    <div id="editVehicleTypeSelector" class="vehicle-type-selector"></div>
+                </div>
+
                 <div class="form-group">
                     <label>Registreringsnummer *</label>
                     <input type="text" id="editRegNumber" required placeholder="ABC123">
                 </div>
+
                 <div class="form-group">
                     <label>Märke *</label>
-                    <select id="editMake" required onchange="updateEditModelOptions()">
-                        <option value="">Välj märke</option>
-                        <option value="Audi">Audi</option>
-                        <option value="BMW">BMW</option>
-                        <option value="Citroën">Citroën</option>
-                        <option value="Cupra">Cupra</option>
-                        <option value="Dacia">Dacia</option>
-                        <option value="Fiat">Fiat</option>
-                        <option value="Ford">Ford</option>
-                        <option value="Honda">Honda</option>
-                        <option value="Hyundai">Hyundai</option>
-                        <option value="Jaguar">Jaguar</option>
-                        <option value="Jeep">Jeep</option>
-                        <option value="Kia">Kia</option>
-                        <option value="Land Rover">Land Rover</option>
-                        <option value="Lexus">Lexus</option>
-                        <option value="Mazda">Mazda</option>
-                        <option value="Mercedes-Benz">Mercedes-Benz</option>
-                        <option value="MINI">MINI</option>
-                        <option value="Mitsubishi">Mitsubishi</option>
-                        <option value="Nissan">Nissan</option>
-                        <option value="Opel">Opel</option>
-                        <option value="Peugeot">Peugeot</option>
-                        <option value="Polestar">Polestar</option>
-                        <option value="Porsche">Porsche</option>
-                        <option value="Renault">Renault</option>
-                        <option value="Saab">Saab</option>
-                        <option value="SEAT">SEAT</option>
-                        <option value="Škoda">Škoda</option>
-                        <option value="Subaru">Subaru</option>
-                        <option value="Suzuki">Suzuki</option>
-                        <option value="Tesla">Tesla</option>
-                        <option value="Toyota">Toyota</option>
-                        <option value="Volkswagen">Volkswagen</option>
-                        <option value="Volvo">Volvo</option>
-                        <option value="Annat">Annat</option>
-                    </select>
+                    <div class="search-input-wrapper">
+                        <input type="text" id="editMakeSearch" placeholder="Sök märke..." autocomplete="off">
+                        <div id="editMakeSearchDropdown" class="search-dropdown"></div>
+                    </div>
                 </div>
+                <div class="form-group" id="editCustomMakeGroup" style="display: none;">
+                    <label>Ange märke</label>
+                    <input type="text" id="editCustomMake" placeholder="Skriv märkesnamn">
+                </div>
+
                 <div class="form-group">
                     <label>Modell *</label>
-                    <select id="editModel" required>
-                        <option value="">Välj först ett märke</option>
-                    </select>
+                    <div class="search-input-wrapper">
+                        <input type="text" id="editModelSearch" placeholder="Sök modell..." autocomplete="off">
+                        <div id="editModelSearchDropdown" class="search-dropdown"></div>
+                    </div>
                 </div>
                 <div class="form-group" id="editCustomModelGroup" style="display: none;">
                     <label data-i18n="addVehicle.labelCustomModel">Ange modell</label>

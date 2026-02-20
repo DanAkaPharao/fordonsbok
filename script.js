@@ -5,6 +5,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'http
 import { t, getLocale, setLocale } from './translations.js';
 import { getCurrencySymbol, getCurrencyCode, formatAmount } from './currencies.js';
 import { mountSelector } from './LanguageCurrencySelector.js';
+import { VEHICLE_TYPES, MAKES_BY_TYPE, MODELS_BY_MAKE, getTypeIcon, getTypeLabel } from './vehicleData.js';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -53,10 +54,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('localeChanged', () => {
-    // Kör i nästa animation frame så klick-eventet är helt klart först
     requestAnimationFrame(() => {
         applyTranslations();
         if (vehicles.length > 0) renderVehicles();
+        // Bygg om fordonstyp-väljare med nytt språk
+        const addSelector  = document.getElementById('vehicleTypeSelector');
+        const editSelector = document.getElementById('editVehicleTypeSelector');
+        if (addSelector) {
+            const activeBtn = addSelector.querySelector('.vehicle-type-btn.active');
+            buildVehicleTypeSelector('vehicleTypeSelector', activeBtn?.dataset.type || 'car');
+        }
+        if (editSelector) {
+            const activeBtn = editSelector.querySelector('.vehicle-type-btn.active');
+            buildVehicleTypeSelector('editVehicleTypeSelector', activeBtn?.dataset.type || 'car');
+        }
         if (currentVehicleId && document.getElementById('vehicleDetailsModal').classList.contains('active')) {
             const vehicle = vehicles.find(v => v.id === currentVehicleId);
             if (vehicle) openVehicleDetails(vehicle.id);
@@ -90,6 +101,12 @@ onAuthStateChanged(auth, async (user) => {
         document.getElementById('authScreen').style.display = 'flex';
         document.getElementById('appScreen').style.display = 'none';
         window.currentUser = null;
+        // Återställ inloggningsknappen om den fastnat i "Loggar in..."-läge
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) {
+            loginBtn.disabled = false;
+            loginBtn.textContent = t('auth.loginBtn');
+        }
     }
 });
 
@@ -97,43 +114,9 @@ onAuthStateChanged(auth, async (user) => {
 let vehicles = [];
 let currentVehicleId = null;
 
-// ─── Vehicle models by make ───────────────────────────────────────────────────
-const modelsByMake = {
-    'Audi': ['A1', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'Q2', 'Q3', 'Q4 e-tron', 'Q5', 'Q7', 'Q8', 'e-tron', 'TT', 'Annat'],
-    'BMW': ['1-serien', '2-serien', '3-serien', '4-serien', '5-serien', '6-serien', '7-serien', '8-serien', 'X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'X7', 'Z4', 'i3', 'i4', 'iX', 'Annat'],
-    'Citroën': ['C1', 'C3', 'C4', 'C5 Aircross', 'Berlingo', 'ë-C4', 'Annat'],
-    'Cupra': ['Formentor', 'Leon', 'Born', 'Ateca', 'Annat'],
-    'Dacia': ['Sandero', 'Duster', 'Jogger', 'Spring', 'Annat'],
-    'Fiat': ['500', '500X', 'Panda', 'Tipo', 'Ducato', 'Annat'],
-    'Ford': ['Fiesta', 'Focus', 'Mondeo', 'Kuga', 'Puma', 'Mustang', 'Explorer', 'Mustang Mach-E', 'Ranger', 'Transit', 'Annat'],
-    'Honda': ['Civic', 'Accord', 'CR-V', 'HR-V', 'Jazz', 'e', 'Annat'],
-    'Hyundai': ['i10', 'i20', 'i30', 'Tucson', 'Kona', 'Santa Fe', 'IONIQ 5', 'IONIQ 6', 'Annat'],
-    'Jaguar': ['E-Pace', 'F-Pace', 'I-Pace', 'XE', 'XF', 'F-Type', 'Annat'],
-    'Jeep': ['Renegade', 'Compass', 'Cherokee', 'Grand Cherokee', 'Wrangler', 'Gladiator', 'Annat'],
-    'Kia': ['Picanto', 'Rio', 'Ceed', 'Sportage', 'Niro', 'Sorento', 'EV6', 'EV9', 'Annat'],
-    'Land Rover': ['Defender', 'Discovery', 'Discovery Sport', 'Range Rover', 'Range Rover Sport', 'Range Rover Evoque', 'Range Rover Velar', 'Annat'],
-    'Lexus': ['CT', 'IS', 'ES', 'NX', 'RX', 'UX', 'LC', 'Annat'],
-    'Mazda': ['2', '3', '6', 'CX-3', 'CX-30', 'CX-5', 'CX-60', 'MX-5', 'MX-30', 'Annat'],
-    'Mercedes-Benz': ['A-klass', 'B-klass', 'C-klass', 'E-klass', 'S-klass', 'CLA', 'CLS', 'GLA', 'GLB', 'GLC', 'GLE', 'GLS', 'EQA', 'EQB', 'EQC', 'EQE', 'EQS', 'Annat'],
-    'MINI': ['Cooper', 'Countryman', 'Clubman', 'Electric', 'Annat'],
-    'Mitsubishi': ['Outlander', 'Eclipse Cross', 'ASX', 'L200', 'Annat'],
-    'Nissan': ['Micra', 'Juke', 'Qashqai', 'X-Trail', 'Leaf', 'Ariya', 'Navara', 'Annat'],
-    'Opel': ['Corsa', 'Astra', 'Insignia', 'Grandland', 'Mokka', 'Combo', 'Annat'],
-    'Peugeot': ['108', '208', '308', '508', '2008', '3008', '5008', 'e-208', 'e-2008', 'Annat'],
-    'Polestar': ['Polestar 2', 'Polestar 3', 'Polestar 4', 'Annat'],
-    'Porsche': ['911', 'Taycan', 'Panamera', 'Cayenne', 'Macan', 'Boxster', 'Cayman', 'Annat'],
-    'Renault': ['Clio', 'Captur', 'Mégane', 'Kadjar', 'Koleos', 'Zoe', 'Mégane E-Tech', 'Twingo', 'Annat'],
-    'Saab': ['9-3', '9-5', '900', '9000', 'Annat'],
-    'SEAT': ['Ibiza', 'Leon', 'Arona', 'Ateca', 'Tarraco', 'Annat'],
-    'Škoda': ['Fabia', 'Scala', 'Octavia', 'Superb', 'Kamiq', 'Karoq', 'Kodiaq', 'Enyaq', 'Annat'],
-    'Subaru': ['Impreza', 'XV', 'Forester', 'Outback', 'Levorg', 'Annat'],
-    'Suzuki': ['Swift', 'Ignis', 'Vitara', 'S-Cross', 'Across', 'Annat'],
-    'Tesla': ['Model 3', 'Model S', 'Model X', 'Model Y', 'Annat'],
-    'Toyota': ['Yaris', 'Corolla', 'Camry', 'RAV4', 'C-HR', 'Aygo', 'Prius', 'Highlander', 'Land Cruiser', 'bZ4X', 'Hilux', 'Proace', 'Annat'],
-    'Volkswagen': ['Golf', 'Polo', 'Passat', 'Tiguan', 'T-Roc', 'Touareg', 'Arteon', 'ID.3', 'ID.4', 'ID.5', 'ID.Buzz', 'Up!', 'Caddy', 'Transporter', 'Annat'],
-    'Volvo': ['V40', 'V60', 'V70', 'V90', 'S60', 'S90', 'XC40', 'XC60', 'XC70', 'XC90', 'C30', 'C40', 'EX30', 'EX90', 'Annat'],
-    'Annat': ['Annat']
-};
+// ─── Vehicle data now lives in vehicleData.js ─────────────────────────────────
+// VEHICLE_TYPES, MAKES_BY_TYPE, MODELS_BY_MAKE, getTypeIcon, getTypeLabel
+// are imported at the top of this file.
 
 // ─── Auth functions ───────────────────────────────────────────────────────────
 function switchAuthTab(tab) {
@@ -234,59 +217,240 @@ async function handleLogout() {
     }
 }
 
-// ─── Model dropdown ───────────────────────────────────────────────────────────
-function updateModelOptions() {
-    const makeSelect = document.getElementById('make');
-    const modelSelect = document.getElementById('model');
-    const customModelGroup = document.getElementById('customModelGroup');
-    const selectedMake = makeSelect.value;
-    modelSelect.innerHTML = '<option value="">Välj modell</option>';
-    if (selectedMake && modelsByMake[selectedMake]) {
-        modelsByMake[selectedMake].forEach(model => {
-            const option = document.createElement('option');
-            option.value = model;
-            option.textContent = model;
-            modelSelect.appendChild(option);
-        });
-        modelSelect.addEventListener('change', function() {
-            if (this.value === 'Annat') {
-                customModelGroup.style.display = 'block';
-                document.getElementById('customModel').required = true;
+// ─── Fordonstyp-väljare ───────────────────────────────────────────────────────
+function buildVehicleTypeSelector(containerId, selectedType) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = VEHICLE_TYPES.map(vt => {
+        const label = t(`vehicleTypes.${vt.id}`) || vt.label;
+        return `
+        <button type="button"
+            class="vehicle-type-btn ${selectedType === vt.id ? 'active' : ''}"
+            data-type="${vt.id}"
+            title="${label}">
+            <span class="vt-icon">${vt.icon}</span>
+            <span class="vt-label">${label}</span>
+        </button>
+    `}).join('');
+    container.querySelectorAll('.vehicle-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            container.querySelectorAll('.vehicle-type-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const prefix = containerId.startsWith('edit') ? 'edit' : '';
+            const hiddenInput = document.getElementById(prefix ? 'editVehicleType' : 'vehicleType');
+            if (hiddenInput) hiddenInput.value = btn.dataset.type;
+            if (prefix) {
+                populateMakeSearch('editMakeSearch', btn.dataset.type);
             } else {
-                customModelGroup.style.display = 'none';
-                document.getElementById('customModel').required = false;
+                populateMakeSearch('makeSearch', btn.dataset.type);
             }
         });
-    }
+    });
 }
 
-function updateEditModelOptions() {
-    const makeSelect = document.getElementById('editMake');
-    const modelSelect = document.getElementById('editModel');
-    const customModelGroup = document.getElementById('editCustomModelGroup');
-    const selectedMake = makeSelect.value;
-    modelSelect.innerHTML = '<option value="">Välj modell</option>';
-    if (selectedMake && modelsByMake[selectedMake]) {
-        modelsByMake[selectedMake].forEach(model => {
-            const option = document.createElement('option');
-            option.value = model;
-            option.textContent = model;
-            modelSelect.appendChild(option);
-        });
-        modelSelect.addEventListener('change', function() {
-            if (this.value === 'Annat') {
-                customModelGroup.style.display = 'block';
-                document.getElementById('editCustomModel').required = true;
-            } else {
-                customModelGroup.style.display = 'none';
-                document.getElementById('editCustomModel').required = false;
-            }
-        });
+// ─── Sökbar märkesdropdown ────────────────────────────────────────────────────
+function populateMakeSearch(inputId, vehicleTypeId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const makes = MAKES_BY_TYPE[vehicleTypeId] || MAKES_BY_TYPE['car'];
+    input.dataset.makes = JSON.stringify(makes);
+    input.value = '';
+    // Rensa modell
+    const isEdit = inputId.startsWith('edit');
+    clearModelSearch(isEdit ? 'editModelSearch' : 'modelSearch');
+    // Rensa custom fält
+    if (!isEdit) {
+        document.getElementById('customMakeGroup').style.display = 'none';
+        document.getElementById('customModelGroup').style.display = 'none';
+        document.getElementById('customMake').value = '';
+        document.getElementById('customModel').value = '';
+    } else {
+        document.getElementById('editCustomMakeGroup').style.display = 'none';
+        document.getElementById('editCustomModelGroup').style.display = 'none';
+        document.getElementById('editCustomMake').value = '';
+        document.getElementById('editCustomModel').value = '';
     }
+    showMakeDropdown(inputId, makes);
 }
+
+function clearModelSearch(inputId) {
+    const input = document.getElementById(inputId);
+    if (input) { input.value = ''; input.dataset.models = '[]'; }
+    const dropdown = document.getElementById(inputId + 'Dropdown');
+    if (dropdown) dropdown.innerHTML = '';
+}
+
+function showMakeDropdown(inputId, makes) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(inputId + 'Dropdown');
+    if (!input || !dropdown) return;
+    const query = input.value.toLowerCase();
+    const filtered = makes.filter(m => m.toLowerCase().includes(query));
+    if (filtered.length === 0 && query.length === 0) { dropdown.style.display = 'none'; return; }
+    dropdown.innerHTML = filtered.map(m =>
+        `<div class="search-option" data-value="${m}">${m}</div>`
+    ).join('');
+    dropdown.style.display = filtered.length > 0 ? 'block' : 'none';
+
+    dropdown.querySelectorAll('.search-option').forEach(opt => {
+        opt.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            selectMake(inputId, opt.dataset.value);
+        });
+    });
+}
+
+function selectMake(inputId, makeValue) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(inputId + 'Dropdown');
+    if (!input || !dropdown) return;
+    const isEdit = inputId.startsWith('edit');
+
+    if (makeValue === 'Annat') {
+        input.value = '';
+        const customGroup = document.getElementById(isEdit ? 'editCustomMakeGroup' : 'customMakeGroup');
+        if (customGroup) customGroup.style.display = 'block';
+    } else {
+        input.value = makeValue;
+        const customGroup = document.getElementById(isEdit ? 'editCustomMakeGroup' : 'customMakeGroup');
+        if (customGroup) customGroup.style.display = 'none';
+        // Ladda modeller för detta märke
+        const models = MODELS_BY_MAKE[makeValue] || ['Annat'];
+        const modelInputId = isEdit ? 'editModelSearch' : 'modelSearch';
+        const modelInput = document.getElementById(modelInputId);
+        if (modelInput) {
+            modelInput.dataset.models = JSON.stringify(models);
+            modelInput.value = '';
+            modelInput.disabled = false;
+            modelInput.placeholder = 'Sök modell...';
+        }
+    }
+    dropdown.style.display = 'none';
+}
+
+function showModelDropdown(inputId) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(inputId + 'Dropdown');
+    if (!input || !dropdown) return;
+    const models = JSON.parse(input.dataset.models || '[]');
+    const query = input.value.toLowerCase();
+    const filtered = models.filter(m => m.toLowerCase().includes(query));
+    if (filtered.length === 0) { dropdown.style.display = 'none'; return; }
+    dropdown.innerHTML = filtered.map(m =>
+        `<div class="search-option" data-value="${m}">${m}</div>`
+    ).join('');
+    dropdown.style.display = 'block';
+
+    dropdown.querySelectorAll('.search-option').forEach(opt => {
+        opt.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            selectModel(inputId, opt.dataset.value);
+        });
+    });
+}
+
+function selectModel(inputId, modelValue) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(inputId + 'Dropdown');
+    if (!input || !dropdown) return;
+    const isEdit = inputId.startsWith('edit');
+
+    if (modelValue === 'Annat') {
+        input.value = '';
+        const customGroup = document.getElementById(isEdit ? 'editCustomModelGroup' : 'customModelGroup');
+        if (customGroup) customGroup.style.display = 'block';
+    } else {
+        input.value = modelValue;
+        const customGroup = document.getElementById(isEdit ? 'editCustomModelGroup' : 'customModelGroup');
+        if (customGroup) customGroup.style.display = 'none';
+    }
+    dropdown.style.display = 'none';
+}
+
+// Stäng dropdowns vid klick utanför
+document.addEventListener('click', (e) => {
+    ['makeSearchDropdown','modelSearchDropdown','editMakeSearchDropdown','editModelSearchDropdown'].forEach(id => {
+        const dropdown = document.getElementById(id);
+        if (dropdown && !e.target.closest(`#${id}`) && !e.target.closest(`#${id.replace('Dropdown','')}`) ) {
+            dropdown.style.display = 'none';
+        }
+    });
+});
+
+// ─── Hjälpfunktioner för att läsa märke/modell från formulär ────────────────
+function getMakeValue(prefix) {
+    const isEdit      = (prefix === 'edit');
+    const makeInputId = isEdit ? 'editMakeSearch'      : 'makeSearch';
+    const customGrpId = isEdit ? 'editCustomMakeGroup' : 'customMakeGroup';
+    const customFldId = isEdit ? 'editCustomMake'      : 'customMake';
+    const customGroup = document.getElementById(customGrpId);
+    if (customGroup && customGroup.style.display === 'block') {
+        const f = document.getElementById(customFldId);
+        return f ? f.value.trim() : '';
+    }
+    const inp = document.getElementById(makeInputId);
+    return inp ? inp.value.trim() : '';
+}
+
+function getModelValue(prefix) {
+    const isEdit       = (prefix === 'edit');
+    const modelInputId = isEdit ? 'editModelSearch'      : 'modelSearch';
+    const customGrpId  = isEdit ? 'editCustomModelGroup' : 'customModelGroup';
+    const customFldId  = isEdit ? 'editCustomModel'      : 'customModel';
+    const customGroup  = document.getElementById(customGrpId);
+    if (customGroup && customGroup.style.display === 'block') {
+        const f = document.getElementById(customFldId);
+        return f ? f.value.trim() : '';
+    }
+    const inp = document.getElementById(modelInputId);
+    return inp ? inp.value.trim() : '';
+}
+
+// Gamla funktioner behålls för bakåtkompatibilitet men delegerar till nya
+function updateModelOptions() { /* Hanteras nu via sökbara fält */ }
+function updateEditModelOptions() { /* Hanteras nu via sökbara fält */ }
 
 // ─── Photo preview listeners ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialisera fordonstyp-väljare
+    buildVehicleTypeSelector('vehicleTypeSelector', 'car');
+    populateMakeSearch('makeSearch', 'car');
+    buildVehicleTypeSelector('editVehicleTypeSelector', 'car');
+
+    // Lyssnare för sökbara fält
+    const makeSearch = document.getElementById('makeSearch');
+    if (makeSearch) {
+        makeSearch.addEventListener('focus', () => {
+            const makes = JSON.parse(makeSearch.dataset.makes || '[]');
+            showMakeDropdown('makeSearch', makes);
+        });
+        makeSearch.addEventListener('input', () => {
+            const makes = JSON.parse(makeSearch.dataset.makes || '[]');
+            showMakeDropdown('makeSearch', makes);
+        });
+    }
+    const modelSearch = document.getElementById('modelSearch');
+    if (modelSearch) {
+        modelSearch.addEventListener('focus', () => showModelDropdown('modelSearch'));
+        modelSearch.addEventListener('input', () => showModelDropdown('modelSearch'));
+    }
+    const editMakeSearch = document.getElementById('editMakeSearch');
+    if (editMakeSearch) {
+        editMakeSearch.addEventListener('focus', () => {
+            const makes = JSON.parse(editMakeSearch.dataset.makes || '[]');
+            showMakeDropdown('editMakeSearch', makes);
+        });
+        editMakeSearch.addEventListener('input', () => {
+            const makes = JSON.parse(editMakeSearch.dataset.makes || '[]');
+            showMakeDropdown('editMakeSearch', makes);
+        });
+    }
+    const editModelSearch = document.getElementById('editModelSearch');
+    if (editModelSearch) {
+        editModelSearch.addEventListener('focus', () => showModelDropdown('editModelSearch'));
+        editModelSearch.addEventListener('input', () => showModelDropdown('editModelSearch'));
+    }
+
     const photoInput = document.getElementById('vehiclePhoto');
     if (photoInput) {
         photoInput.addEventListener('change', (e) => {
@@ -337,12 +501,44 @@ function openEditVehicleModal(id) {
     if (!vehicle) return;
     document.getElementById('editVehicleId').value = id;
     document.getElementById('editRegNumber').value = vehicle.regNumber;
-    document.getElementById('editMake').value = vehicle.make;
-    updateEditModelOptions();
-    setTimeout(() => {
-        document.getElementById('editModel').value = vehicle.model;
-    }, 50);
-    document.getElementById('editYear').value = vehicle.year || '';
+
+    // Fordonstyp
+    const vType = vehicle.vehicleType || 'car';
+    document.getElementById('editVehicleType').value = vType;
+    buildVehicleTypeSelector('editVehicleTypeSelector', vType);
+
+    // Märke
+    const makes = MAKES_BY_TYPE[vType] || MAKES_BY_TYPE['car'];
+    const makeInput = document.getElementById('editMakeSearch');
+    if (makeInput) {
+        makeInput.dataset.makes = JSON.stringify(makes);
+        if (makes.includes(vehicle.make)) {
+            makeInput.value = vehicle.make;
+            document.getElementById('editCustomMakeGroup').style.display = 'none';
+        } else {
+            makeInput.value = '';
+            document.getElementById('editCustomMakeGroup').style.display = 'block';
+            document.getElementById('editCustomMake').value = vehicle.make;
+        }
+    }
+
+    // Modell
+    const models = MODELS_BY_MAKE[vehicle.make] || ['Annat'];
+    const modelInput = document.getElementById('editModelSearch');
+    if (modelInput) {
+        modelInput.dataset.models = JSON.stringify(models);
+        modelInput.disabled = false;
+        if (models.includes(vehicle.model)) {
+            modelInput.value = vehicle.model;
+            document.getElementById('editCustomModelGroup').style.display = 'none';
+        } else {
+            modelInput.value = '';
+            document.getElementById('editCustomModelGroup').style.display = 'block';
+            document.getElementById('editCustomModel').value = vehicle.model;
+        }
+    }
+
+    document.getElementById('editYear').value  = vehicle.year  || '';
     document.getElementById('editColor').value = vehicle.color || '';
     document.getElementById('editNotes').value = vehicle.notes || '';
     const currentPhotoDiv = document.getElementById('editCurrentPhoto');
@@ -366,9 +562,11 @@ async function updateVehicle(event) {
     btn.textContent = 'Uppdaterar...';
     const vehicleId = document.getElementById('editVehicleId').value;
     const vehicle = vehicles.find(v => v.id === vehicleId);
-    const modelSelect = document.getElementById('editModel');
-    let modelValue = modelSelect.value;
-    if (modelValue === 'Annat') modelValue = document.getElementById('editCustomModel').value;
+    const vehicleType = document.getElementById('editVehicleType').value || vehicle.vehicleType || 'car';
+    const makeValue   = getMakeValue('edit');
+    const modelValue  = getModelValue('edit');
+    if (!makeValue) { alert('Ange ett märke.'); btn.disabled = false; btn.textContent = 'Uppdatera fordon'; return; }
+    if (!modelValue) { alert('Ange en modell.'); btn.disabled = false; btn.textContent = 'Uppdatera fordon'; return; }
     let photoURL = vehicle.photoURL || null;
     const photoFile = document.getElementById('editVehiclePhoto').files[0];
     if (photoFile) {
@@ -394,14 +592,15 @@ async function updateVehicle(event) {
         }
     }
     const updatedData = {
-        regNumber: document.getElementById('editRegNumber').value.toUpperCase(),
-        make: document.getElementById('editMake').value,
-        model: modelValue,
-        year: document.getElementById('editYear').value,
-        color: document.getElementById('editColor').value,
-        notes: document.getElementById('editNotes').value,
-        photoURL: photoURL,
-        services: vehicle.services
+        regNumber:   document.getElementById('editRegNumber').value.toUpperCase(),
+        vehicleType: vehicleType,
+        make:        makeValue,
+        model:       modelValue,
+        year:        document.getElementById('editYear').value,
+        color:       document.getElementById('editColor').value,
+        notes:       document.getElementById('editNotes').value,
+        photoURL:    photoURL,
+        services:    vehicle.services
     };
     try {
         await updateDoc(doc(db, 'vehicles', vehicleId), updatedData);
@@ -459,22 +658,28 @@ function renderVehicles() {
         container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🚗</div><h3>${t('vehicles.emptyHeading')}</h3><p>${t('vehicles.emptyHint')}</p></div>`;
         return;
     }
-    container.innerHTML = vehicles.map((vehicle, index) => `
+    container.innerHTML = vehicles.map((vehicle, index) => {
+        const typeIcon = getTypeIcon(vehicle.vehicleType || 'car');
+        return `
         <div class="vehicle-card" onclick="openVehicleDetails('${vehicle.id}')" style="animation-delay: ${index * 0.1}s; ${vehicle.sold ? 'opacity: 0.6; filter: grayscale(60%);' : ''}">
             ${vehicle.sold ? `<div style="position: absolute; top: 10px; right: 10px; background: rgba(255,0,0,0.9); color: white; padding: 5px 12px; font-weight: bold; font-size: 0.75rem; transform: rotate(15deg); z-index: 10;">${t('vehicles.soldBadge')}</div>` : ''}
             ${vehicle.photoURL
                 ? `<img src="${vehicle.photoURL}" alt="${vehicle.regNumber}" class="vehicle-photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="${vehicle.sold ? 'filter: grayscale(80%);' : ''}">
-                   <div class="no-photo" style="display: none;">🚗</div>`
-                : `<div class="no-photo">🚗</div>`
+                   <div class="no-photo" style="display: none;">${typeIcon}</div>`
+                : `<div class="no-photo">${typeIcon}</div>`
             }
+            <div class="vehicle-type-badge">${typeIcon} ${getTypeLabel(vehicle.vehicleType || 'car')}</div>
             <div class="vehicle-reg" style="margin-bottom: 12px;">${vehicle.regNumber}${vehicle.sold ? ` <span style="color: #ff4444; font-size: 0.7rem;">${t('vehicles.soldLabel')}</span>` : ''}</div>
             ${!vehicle.sold ? `
             <div style="display: flex; gap: 6px; margin-bottom: 15px; flex-wrap: wrap;">
                 <button class="delete-btn" style="background: rgba(255, 165, 0, 0.2); border-color: rgba(255, 165, 0, 0.4); color: #ffa500; font-size: 0.75rem; padding: 8px 12px;" onclick="event.stopPropagation(); openEditVehicleModal('${vehicle.id}')">${t('vehicles.editBtn')}</button>
-                <button class="delete-btn" style="background: rgba(255,50,50,0.2); border-color: rgba(255,50,50,0.4); color: #ff6464; font-size: 0.75rem; padding: 8px 12px;" onclick="event.stopPropagation(); currentVehicleId='${vehicle.id}'; openSellVehicleModal()">${t('vehicles.sellBtn')}</button>
+                <button class="delete-btn" style="background: rgba(255,50,50,0.2); border-color: rgba(255,50,50,0.4); color: #ff6464; font-size: 0.75rem; padding: 8px 12px;" onclick="event.stopPropagation(); openSellVehicleModal('${vehicle.id}')">${t('vehicles.sellBtn')}</button>
+            </div>
+            ` : `
+            <div style="display: flex; gap: 6px; margin-bottom: 15px;">
                 <button class="delete-btn" style="font-size: 0.75rem; padding: 8px 12px;" onclick="event.stopPropagation(); deleteVehicle('${vehicle.id}')">🗑️</button>
             </div>
-            ` : `<div style="margin-bottom: 15px;"></div>`}
+            `}
             <div class="vehicle-info">
                 <p><strong>${t('vehicles.labelMake')}</strong>${vehicle.make}</p>
                 <p><strong>${t('vehicles.labelModel')}</strong>${vehicle.model}</p>
@@ -484,7 +689,7 @@ function renderVehicles() {
             </div>
             <span class="service-count">${t('vehicles.servicePosts', vehicle.services?.length || 0)} ${vehicle.locked ? '🔒' : ''}</span>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 // ─── Add vehicle ──────────────────────────────────────────────────────────────
@@ -494,9 +699,14 @@ async function addVehicle(event) {
     const btn = document.getElementById('addVehicleBtn');
     btn.disabled = true;
     btn.textContent = t('addVehicle.saving');
-    const modelSelect = document.getElementById('model');
-    let modelValue = modelSelect.value;
-    if (modelValue === 'Annat') modelValue = document.getElementById('customModel').value;
+
+    const vehicleType = document.getElementById('vehicleType').value || 'car';
+    const makeValue   = getMakeValue('');
+    const modelValue  = getModelValue('');
+
+    if (!makeValue) { alert('Ange ett märke.'); btn.disabled = false; btn.textContent = t('addVehicle.submitBtn'); return; }
+    if (!modelValue) { alert('Ange en modell.'); btn.disabled = false; btn.textContent = t('addVehicle.submitBtn'); return; }
+
     let photoURL = null;
     const photoFile = document.getElementById('vehiclePhoto').files[0];
     if (photoFile) {
@@ -511,22 +721,24 @@ async function addVehicle(event) {
         }
     }
     const vehicle = {
-        userId: window.currentUser.uid,
-        regNumber: document.getElementById('regNumber').value.toUpperCase(),
-        make: document.getElementById('make').value,
-        model: modelValue,
-        year: document.getElementById('year').value,
-        color: document.getElementById('color').value,
-        notes: document.getElementById('notes').value,
-        photoURL: photoURL,
-        services: [],
-        createdAt: new Date().toISOString()
+        userId:      window.currentUser.uid,
+        regNumber:   document.getElementById('regNumber').value.toUpperCase(),
+        vehicleType: vehicleType,
+        make:        makeValue,
+        model:       modelValue,
+        year:        document.getElementById('year').value,
+        color:       document.getElementById('color').value,
+        notes:       document.getElementById('notes').value,
+        photoURL:    photoURL,
+        services:    [],
+        createdAt:   new Date().toISOString()
     };
     try {
         await addDoc(collection(db, 'vehicles'), vehicle);
         await loadVehicles();
         closeModal('addVehicleModal');
         document.getElementById('addVehicleForm').reset();
+        document.getElementById('customMakeGroup').style.display = 'none';
         document.getElementById('customModelGroup').style.display = 'none';
         document.getElementById('photoPreview').style.display = 'none';
     } catch (error) {
@@ -558,9 +770,10 @@ function openVehicleDetails(id) {
     document.getElementById('vehicleDetailsContent').innerHTML = `
         ${vehicle.photoURL
             ? `<img src="${vehicle.photoURL}" alt="${vehicle.regNumber}" class="vehicle-photo-full" style="margin-bottom: 20px;">`
-            : `<div class="no-photo" style="margin-bottom: 20px;">🚗</div>`
+            : `<div class="no-photo" style="margin-bottom: 20px;">${getTypeIcon(vehicle.vehicleType || 'car')}</div>`
         }
         <div class="vehicle-info">
+            ${vehicle.vehicleType ? `<p><strong>Fordonstyp</strong>${getTypeIcon(vehicle.vehicleType)} ${getTypeLabel(vehicle.vehicleType)}</p>` : ''}
             <p><strong>${t('vehicleDetails.labelMake')}</strong>${vehicle.make}</p>
             <p><strong>${t('vehicleDetails.labelModel')}</strong>${vehicle.model}</p>
             ${vehicle.year ? `<p><strong>${t('vehicleDetails.labelYear')}</strong>${vehicle.year}</p>` : ''}
@@ -569,6 +782,36 @@ function openVehicleDetails(id) {
         </div>
     `;
     renderServiceList(vehicle);
+
+    // Visa rätt knappar beroende på om fordonet är sålt/låst
+    const btnContainer = document.getElementById('vehicleActionButtons');
+    if (vehicle.sold || vehicle.locked) {
+        // Sålt fordon — dela + PDF, ej redigera/sälja
+        btnContainer.innerHTML = `
+            <button class="secondary" onclick="shareVehicle()" style="background: rgba(0,150,255,0.2); border-color: rgba(0,150,255,0.5); color: #4db8ff;">
+                <span data-i18n="vehicleDetails.shareBtn">🔗 Dela servicebok</span>
+            </button>
+            <button class="secondary" onclick="exportPDF()" style="background: rgba(0,200,100,0.2); border-color: rgba(0,200,100,0.5); color: #00c864;">
+                <span data-i18n="vehicleDetails.exportPDFBtn">📄 Exportera PDF</span>
+            </button>
+            <p style="color: #888; font-size: 0.8rem; width: 100%; margin-top: 5px;">🔒 Fordonet är överlåtet — servicehistorik är låst</p>
+        `;
+    } else {
+        // Aktivt fordon — alla knappar
+        btnContainer.innerHTML = `
+            <button onclick="openAddServiceModal()"><span data-i18n="vehicleDetails.addServiceBtn">+ Lägg till service</span></button>
+            <button class="secondary" onclick="shareVehicle()" style="background: rgba(0,150,255,0.2); border-color: rgba(0,150,255,0.5); color: #4db8ff;">
+                <span data-i18n="vehicleDetails.shareBtn">🔗 Dela servicebok</span>
+            </button>
+            <button class="secondary" onclick="exportPDF()" style="background: rgba(0,200,100,0.2); border-color: rgba(0,200,100,0.5); color: #00c864;">
+                <span data-i18n="vehicleDetails.exportPDFBtn">📄 Exportera PDF</span>
+            </button>
+            <button class="secondary" onclick="openSellVehicleModal('${vehicle.id}')" style="background: rgba(255,50,50,0.2); border-color: rgba(255,50,50,0.5); color: #ff6464;">
+                <span data-i18n="vehicleDetails.sellBtn">🤝 Sälj / Överlåt</span>
+            </button>
+        `;
+    }
+
     openModal('vehicleDetailsModal');
 }
 
@@ -632,6 +875,16 @@ async function addService(event) {
     btn.disabled = true;
     btn.textContent = t('addService.saving');
     const performedBy = document.getElementById('performedBy').value;
+    const _serviceDate = document.getElementById('serviceDate').value;
+    if (_serviceDate) {
+        const yearPart = _serviceDate.split('-')[0];
+        if (yearPart.length !== 4) {
+            alert('Ogiltigt datum — kontrollera årtalet (4 siffror).');
+            btn.disabled = false;
+            btn.textContent = t('addService.submitBtn');
+            return;
+        }
+    }
     let receiptURL = null;
     const receiptFile = document.getElementById('serviceReceipt').files[0];
     if (receiptFile) {
@@ -719,6 +972,11 @@ async function updateService(event) {
     const _performedBy = document.getElementById('editPerformedBy').value;
     if (!_date || !_type || !_performedBy) {
         alert(t('editService.updateFail'));
+        return;
+    }
+    const _yearPart = _date.split('-')[0];
+    if (_yearPart.length !== 4) {
+        alert('Ogiltigt datum — kontrollera årtalet (4 siffror).');
         return;
     }
 
@@ -880,7 +1138,9 @@ function renderShareView(vehicle) {
 }
 
 // ─── Sell / Transfer ──────────────────────────────────────────────────────────
-function openSellVehicleModal() {
+function openSellVehicleModal(id) {
+    if (id) currentVehicleId = id;
+    document.getElementById('sellVehicleModal').dataset.vehicleId = currentVehicleId;
     document.getElementById('transferDate').valueAsDate = new Date();
     openModal('sellVehicleModal');
 }
@@ -917,7 +1177,16 @@ async function sellVehicle() {
             return;
         }
         btn.textContent = t('sell.transferring');
-        const vehicle = vehicles.find(v => v.id === currentVehicleId);
+        const vehicleId = currentVehicleId || document.getElementById('sellVehicleModal').dataset.vehicleId;
+        const vehicle = vehicles.find(v => v.id === vehicleId);
+        if (!vehicle) {
+            console.error('sellVehicle: vehicle not found. vehicleId=', vehicleId, 'vehicles=', vehicles.map(v => v.id));
+            alert('Kunde inte hitta fordonet. Stäng dialogen och försök igen.');
+            btn.disabled = false;
+            btn.textContent = t('sell.confirmBtn');
+            return;
+        }
+        currentVehicleId = vehicleId;
         const lockedServices = (vehicle.services || []).map(s => ({ ...s, locked: true }));
         lockedServices.push({
             id: `transfer_${Date.now()}`,
@@ -928,6 +1197,18 @@ async function sellVehicle() {
             locked: true,
             createdAt: new Date().toISOString()
         });
+        // Snapshot fordonsdata INNAN säljarens dokument uppdateras
+        const vehicleSnapshot = {
+            regNumber:   vehicle.regNumber,
+            vehicleType: vehicle.vehicleType || 'car',
+            make:        vehicle.make,
+            model:       vehicle.model,
+            year:        vehicle.year || '',
+            color:       vehicle.color || '',
+            notes:       vehicle.notes || '',
+            photoURL:    vehicle.photoURL || null,
+        };
+
         const updateData = {
             previousOwner: window.currentUser.uid,
             previousOwnerEmail: window.currentUser.email,
@@ -939,13 +1220,33 @@ async function sellVehicle() {
             shareToken: null,
             sold: true
         };
-        if (newOwnerUid) {
-            updateData.userId = newOwnerUid;
-            updateData.newOwnerEmail = email;
-        } else {
-            updateData.archivedSale = true;
-        }
+
+        // Uppdatera säljarens dokument — bilen stannar kvar, markeras som såld och låst
         await updateDoc(doc(db, 'vehicles', currentVehicleId), updateData);
+
+        // Om köparen är en Fordonsbok-användare — skapa ett NYTT dokument för dem
+        if (newOwnerUid) {
+            const buyerVehicle = {
+                userId:              newOwnerUid,
+                regNumber:           vehicleSnapshot.regNumber,
+                vehicleType:         vehicleSnapshot.vehicleType,
+                make:                vehicleSnapshot.make,
+                model:               vehicleSnapshot.model,
+                year:                vehicleSnapshot.year,
+                color:               vehicleSnapshot.color,
+                notes:               vehicleSnapshot.notes,
+                photoURL:            vehicleSnapshot.photoURL,
+                services:            lockedServices,
+                previousOwner:       window.currentUser.uid,
+                previousOwnerEmail:  window.currentUser.email,
+                transferDate:        transferDate,
+                transferPrice:       price || null,
+                locked:              false,
+                sold:                false,
+                createdAt:           new Date().toISOString()
+            };
+            await addDoc(collection(db, 'vehicles'), buyerVehicle);
+        }
         alert(newOwnerUid ? t('sell.successToUser', email) : t('sell.successArchived'));
         closeModal('sellVehicleModal');
         closeModal('vehicleDetailsModal');
