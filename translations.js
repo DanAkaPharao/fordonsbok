@@ -5,10 +5,20 @@
  *   sv    – Svenska (default)
  *   en-GB – English (United Kingdom)
  *
+ * CURRENCY NOTE:
+ *   Currency symbols are NOT hardcoded here.
+ *   Labels that involve money use the {currency} placeholder.
+ *   Replace it at render time using the active currency from currencies.js:
+ *
+ *     import { t } from './translations.js';
+ *     import { getCurrency } from './currencies.js';
+ *     const label = t('addService.labelCost').replace('{currency}', getCurrency().symbol);
+ *
  * Usage:
  *   import { t, setLocale, getLocale } from './translations.js';
  *   setLocale('en-GB');
- *   console.log(t('app.title')); // → "Vehicle Logbook"
+ *   t('app.title')                  // → "Vehicle Logbook"
+ *   t('vehicles.servicePosts', 3)   // → "3 service records"
  */
 
 const translations = {
@@ -20,7 +30,6 @@ const translations = {
             subtitle: 'Digital Servicehistorik',
         },
 
-        // Auth screen
         auth: {
             tabLogin:           'Inloggning',
             tabRegister:        'Skapa konto',
@@ -36,114 +45,114 @@ const translations = {
             creatingAccount:    'Skapar konto...',
         },
 
-        // Auth error messages
         authErrors: {
-            loginFailed:        'Inloggningen misslyckades. Kontrollera email och lösenord.',
-            userNotFound:       'Ingen användare hittades med denna email.',
-            wrongPassword:      'Felaktigt lösenord.',
-            invalidEmail:       'Ogiltig email-adress.',
-            invalidCredential:  'Felaktig email eller lösenord.',
-            passwordMismatch:   'Lösenorden matchar inte.',
-            accountCreateFail:  'Kunde inte skapa konto. Försök igen.',
-            emailInUse:         'Det finns redan ett konto med denna email.',
-            weakPassword:       'Lösenordet är för svagt. Använd minst 6 tecken.',
+            loginFailed:       'Inloggningen misslyckades. Kontrollera email och lösenord.',
+            userNotFound:      'Ingen användare hittades med denna email.',
+            wrongPassword:     'Felaktigt lösenord.',
+            invalidEmail:      'Ogiltig email-adress.',
+            invalidCredential: 'Felaktig email eller lösenord.',
+            passwordMismatch:  'Lösenorden matchar inte.',
+            accountCreateFail: 'Kunde inte skapa konto. Försök igen.',
+            emailInUse:        'Det finns redan ett konto med denna email.',
+            weakPassword:      'Lösenordet är för svagt. Använd minst 6 tecken.',
         },
 
-        // Forgot password
         forgotPwd: {
-            enterEmailFirst:    'Ange din e-postadress först.',
-            confirmSend:        (email) => `Skicka lösenordsåterställning till ${email}?`,
-            successAlert:       (email) =>
+            enterEmailFirst: 'Ange din e-postadress först.',
+            confirmSend:     (email) => `Skicka lösenordsåterställning till ${email}?`,
+            successAlert:    (email) =>
                 `✅ Kolla din inkorg!\n\nEtt mail med återställningslänk har skickats till ${email}.\n\nOBS: Länken är giltig i 1 timme och kan bara användas EN gång.`,
-            sendFailed:         'Kunde inte skicka återställningsmail.',
+            sendFailed:      'Kunde inte skicka återställningsmail.',
         },
 
-        // Header / navigation
         header: {
-            loggedInAs: 'Inloggad som:',
-            logoutBtn:  'Logga ut',
+            loggedInAs:    'Inloggad som:',
+            logoutBtn:     'Logga ut',
             confirmLogout: 'Är du säker på att du vill logga ut?',
         },
 
-        // Main controls
         controls: {
-            addVehicle:  '+ Lägg till fordon',
-            exportData:  'Exportera data',
-            buyCoffee:   '☕ Köp en kaffe',
+            addVehicle: '+ Lägg till fordon',
+            exportData: 'Exportera data',
+            buyCoffee:  '☕ Köp en kaffe',
         },
 
-        // Vehicles grid
         vehicles: {
-            loading:          'Laddar fordon',
-            emptyHeading:     'Inga fordon tillagda',
-            emptyHint:        'Klicka på "Lägg till fordon" för att komma igång',
-            loadError:        'Kunde inte ladda fordon. Försök igen.',
-            soldBadge:        'SÅLD',
-            soldLabel:        '(såld)',
-            editBtn:          '✏️ Ändra',
-            sellBtn:          '🤝 Sälj',
-            labelMake:        'Märke:',
-            labelModel:       'Modell:',
-            labelYear:        'År:',
-            labelColor:       'Färg:',
-            labelSold:        'Såld:',
-            servicePosts:     (n) => `${n} serviceposter`,
+            loading:      'Laddar fordon',
+            emptyHeading: 'Inga fordon tillagda',
+            emptyHint:    'Klicka på "Lägg till fordon" för att komma igång',
+            loadError:    'Kunde inte ladda fordon. Försök igen.',
+            soldBadge:    'SÅLD',
+            soldLabel:    '(såld)',
+            editBtn:      '✏️ Ändra',
+            sellBtn:      '🤝 Sälj',
+            labelMake:    'Märke:',
+            labelModel:   'Modell:',
+            labelYear:    'År:',
+            labelColor:   'Färg:',
+            labelSold:    'Såld:',
+            servicePosts: (n) => `${n} serviceposter`,
         },
 
-        // Add vehicle modal
         addVehicle: {
-            modalTitle:         'Nytt Fordon',
-            labelRegNumber:     'Registreringsnummer *',
-            labelMake:          'Märke *',
-            placeholderMake:    'Välj märke',
-            labelModel:         'Modell *',
-            placeholderModel:   'Välj först ett märke',
-            placeholderModelSel:'Välj modell',
-            labelCustomModel:   'Ange modell *',
-            labelYear:          'Årsmodell',
-            labelColor:         'Färg',
-            labelNotes:         'Anteckningar',
-            labelPhoto:         'Fordonsfoto (valfritt)',
-            choosePhoto:        '📷 Välj foto',
-            submitBtn:          'Spara fordon',
-            saving:             'Sparar...',
-            uploadingPhoto:     'Laddar upp foto...',
-            photoUploadFail:    'Kunde inte ladda upp foto. Fordonet sparas utan foto.',
-            addFail:            'Kunde inte lägga till fordon. Försök igen.',
-            mustBeLoggedIn:     'Du måste vara inloggad för att lägga till fordon.',
-            other:              'Annat',
+            modalTitle:          'Nytt Fordon',
+            labelRegNumber:      'Registreringsnummer *',
+            labelMake:           'Märke *',
+            placeholderMake:     'Välj märke',
+            labelModel:          'Modell *',
+            placeholderModel:    'Välj först ett märke',
+            placeholderModelSel: 'Välj modell',
+            labelCustomModel:    'Ange modell *',
+            placeholderCustom:   'Skriv modellnamn',
+            labelYear:           'Årsmodell',
+            labelColor:          'Färg',
+            placeholderColor:    'Svart',
+            labelNotes:          'Anteckningar',
+            placeholderNotes:    'Övrig information om fordonet...',
+            labelPhoto:          'Foto av fordonet',
+            choosePhoto:         '📷 Välj bild',
+            submitBtn:           'Spara fordon',
+            saving:              'Sparar...',
+            uploadingPhoto:      'Laddar upp foto...',
+            photoUploadFail:     'Kunde inte ladda upp foto. Fordonet sparas utan foto.',
+            addFail:             'Kunde inte lägga till fordon. Försök igen.',
+            mustBeLoggedIn:      'Du måste vara inloggad för att lägga till fordon.',
+            other:               'Annat',
         },
 
-        // Edit vehicle modal
         editVehicle: {
-            modalTitle:     'Redigera Fordon',
-            currentPhoto:   'Nuvarande foto:',
-            changePhoto:    '📷 Byt foto',
-            submitBtn:      'Uppdatera fordon',
-            updating:       'Uppdaterar...',
-            photoUploadFail:'Kunde inte ladda upp foto: {msg}. Övriga ändringar sparas.',
-            updateFail:     'Kunde inte uppdatera fordon. Försök igen.',
+            modalTitle:      'Redigera Fordon',
+            currentPhoto:    'Nuvarande foto:',
+            changePhoto:     '📷 Välj ny bild',
+            submitBtn:       'Uppdatera fordon',
+            updating:        'Uppdaterar...',
+            photoUploadFail: 'Kunde inte ladda upp foto: {msg}. Övriga ändringar sparas.',
+            updateFail:      'Kunde inte uppdatera fordon. Försök igen.',
         },
 
-        // Delete vehicle
         deleteVehicle: {
             confirm:    'Är du säker på att du vill ta bort detta fordon och all dess servicehistorik?',
             deleteFail: 'Kunde inte ta bort fordon. Försök igen.',
         },
 
-        // Vehicle details modal
         vehicleDetails: {
+            closeBtn:         '✕ Stäng servicebok',
+            backBtn:          '← Tillbaka',
             labelMake:        'Märke:',
             labelModel:       'Modell:',
             labelYear:        'År:',
             labelColor:       'Färg:',
             labelNotes:       'Anteckningar:',
             addServiceBtn:    '+ Lägg till service',
+            shareBtn:         '🔗 Dela servicebok',
             exportPDFBtn:     '📄 Exportera PDF',
-            shareBtn:         '🔗 Dela',
+            sellBtn:          '🤝 Sälj / Överlåt',
+            shareLabel:       '🔗 Delningslänk (giltig 30 dagar):',
+            copyLinkBtn:      'Kopiera',
+            shareNote:        'Mottagaren kan se serviceboken utan att logga in. Länken låser inte boken.',
+            serviceHistTitle: 'Servicehistorik',
         },
 
-        // Service list
         serviceList: {
             empty:          'Ingen servicehistorik ännu',
             locked:         '🔒 låst',
@@ -163,122 +172,130 @@ const translations = {
             unknown:        'Okänt',
         },
 
-        // Add service modal
         addService: {
-            modalTitle:         'Ny Service',
-            labelDate:          'Datum *',
-            labelType:          'Typ av service *',
-            placeholderType:    'Välj typ',
-            labelMileage:       'Mätarställning (km)',
-            labelPerformedBy:   'Utfört av *',
-            placeholderPerf:    'Välj',
-            selfOption:         'Själv (eget arbete)',
-            workshopOption:     'Verkstad',
-            labelWorkshop:      'Verkstad',
-            placeholderWorkshop:'Bilverkstan AB',
-            labelCost:          'Kostnad (kr)',
-            labelNotes:         'Anteckningar',
-            placeholderNotes:   'Beskrivning av utförd service...',
-            labelReceipt:       'Ladda upp kvitto (bild/PDF)',
-            chooseReceipt:      '🧾 Välj kvitto',
-            submitBtn:          'Spara service',
-            saving:             'Sparar...',
-            uploadingReceipt:   'Laddar upp kvitto...',
-            receiptUploadFail:  'Kunde inte ladda upp kvitto. Service sparas utan kvitto.',
-            addFail:            'Kunde inte lägga till service. Försök igen.',
-            mustBeLoggedIn:     'Du måste vara inloggad.',
+            modalTitle:          'Ny Service',
+            labelDate:           'Datum *',
+            labelType:           'Typ av service *',
+            placeholderType:     'Välj typ',
+            labelMileage:        'Mätarställning (km)',
+            placeholderMileage:  '15000',
+            labelPerformedBy:    'Utfört av *',
+            placeholderPerf:     'Välj',
+            selfOption:          'Själv (eget arbete)',
+            workshopOption:      'Verkstad',
+            labelWorkshop:       'Verkstad',
+            placeholderWorkshop: 'Bilverkstan AB',
+            labelCost:           'Kostnad ({currency})',
+            placeholderCost:     '2500',
+            labelNotes:          'Anteckningar',
+            placeholderNotes:    'Beskrivning av utförd service...',
+            labelReceipt:        'Ladda upp kvitto (bild/PDF)',
+            chooseReceipt:       '🧾 Välj kvitto',
+            submitBtn:           'Spara service',
+            saving:              'Sparar...',
+            uploadingReceipt:    'Laddar upp kvitto...',
+            receiptUploadFail:   'Kunde inte ladda upp kvitto. Service sparas utan kvitto.',
+            addFail:             'Kunde inte lägga till service. Försök igen.',
+            mustBeLoggedIn:      'Du måste vara inloggad.',
         },
 
-        // Edit service modal
         editService: {
-            modalTitle:         'Redigera Service',
-            labelDate:          'Datum *',
-            labelType:          'Typ av service *',
-            placeholderType:    'Välj typ',
-            labelMileage:       'Mätarställning (km)',
-            labelPerformedBy:   'Utfört av *',
-            placeholderPerf:    'Välj',
-            selfOption:         'Själv (eget arbete)',
-            workshopOption:     'Verkstad',
-            labelWorkshop:      'Verkstad',
-            labelCost:          'Kostnad (kr)',
-            labelNotes:         'Anteckningar',
-            placeholderNotes:   'Beskrivning av utförd service...',
-            labelNewReceipt:    'Ladda upp nytt kvitto (ersätter befintligt)',
-            chooseNewReceipt:   '🧾 Välj nytt kvitto',
-            updateBtn:          'Uppdatera service',
-            updateFail:         'Kunde inte uppdatera service. Försök igen.',
+            modalTitle:          'Redigera Service',
+            labelDate:           'Datum *',
+            labelType:           'Typ av service *',
+            placeholderType:     'Välj typ',
+            labelMileage:        'Mätarställning (km)',
+            placeholderMileage:  '15000',
+            labelPerformedBy:    'Utfört av *',
+            placeholderPerf:     'Välj',
+            selfOption:          'Själv (eget arbete)',
+            workshopOption:      'Verkstad',
+            labelWorkshop:       'Verkstad',
+            labelCost:           'Kostnad ({currency})',
+            placeholderCost:     '2500',
+            labelNotes:          'Anteckningar',
+            placeholderNotes:    'Beskrivning av utförd service...',
+            labelNewReceipt:     'Ladda upp nytt kvitto (ersätter befintligt)',
+            chooseNewReceipt:    '🧾 Välj nytt kvitto',
+            updateBtn:           'Uppdatera service',
+            updateFail:          'Kunde inte uppdatera service. Försök igen.',
         },
 
-        // Delete service
         deleteService: {
             confirm:    'Är du säker på att du vill ta bort denna servicepost?',
             deleteFail: 'Kunde inte ta bort service. Försök igen.',
         },
 
-        // Receipt viewer modal
         receiptModal: {
             title: '🧾 Kvitto',
         },
 
-        // Sell / Transfer modal
         sell: {
-            modalTitle:     '🤝 Överlåt / Sälj fordon',
-            labelDate:      'Överlåtelsedatum *',
-            labelNewOwner:  'Ny ägares email (om registrerad)',
-            labelPrice:     'Försäljningspris (kr)',
-            labelNote:      'Anteckning',
-            confirmBtn:     '🤝 Bekräfta överlåtelse',
-            searching:      'Söker ny ägare...',
-            transferring:   'Överlåter...',
-            fillDate:       'Fyll i överlåtelsedatum.',
-            noUserFound:    (email) =>
+            modalTitle:      '🤝 Sälj / Överlåt fordon',
+            warningTitle:    '⚠️ OBS! Detta kan inte ångras!',
+            warningBody:     'All befintlig servicehistorik låses permanent. Ny ägare kan inte ändra eller ta bort historiken - bara lägga till nya poster.',
+            labelNewOwner:   'Ny ägares e-postadress',
+            placeholderEmail:'nyagare@email.se (lämna tomt om okänd)',
+            ownerHint:       'Lämna tomt om du sålt bilen men köparen inte använder Fordonsbok.',
+            labelDate:       'Överlåtelsedatum *',
+            labelPrice:      'Försäljningspris ({currency})',
+            placeholderPrice:'250000',
+            labelNote:       'Meddelande till ny ägare',
+            placeholderNote: 'T.ex. servicar nyligen utförda, kända fel...',
+            confirmBtn:      '🤝 Bekräfta överlåtelse',
+            searching:       'Söker ny ägare...',
+            transferring:    'Överlåter...',
+            fillDate:        'Fyll i överlåtelsedatum.',
+            noUserFound:     (email) =>
                 `❌ Ingen användare hittades med e-posten: ${email}\n\nLämna fältet tomt om köparen inte har konto.`,
-            confirmToUser:  (email) =>
+            confirmToUser:   (email) =>
                 `Bekräfta överlåtelse till ${email}?\n\nBilen flyttas till deras konto.`,
             confirmNoUser:
                 `Bekräfta överlåtelse utan registrerad köpare?\n\nBilen arkiveras som "SÅLD" i ditt konto.`,
             lockWarning:
                 `\n\nAll befintlig servicehistorik låses permanent.\n\nDetta kan INTE ångras!`,
-            successToUser:  (email) => `✅ Bilen är överlåten till ${email}!`,
+            successToUser:   (email) => `✅ Bilen är överlåten till ${email}!`,
             successArchived: '✅ Bilen är markerad som SÅLD och arkiverad!',
-            transferFail:   'Kunde inte överlåta bilen. Försök igen.',
-            transferType:   '🤝 Överlåtelse',
-            transferNote:   (email, price, note) =>
-                `Bil ${email ? 'överlåten till ' + email : 'såld (köpare ej registrerad)'}${price ? '. Pris: ' + parseInt(price).toLocaleString('sv-SE') + ' kr' : ''}${note ? '. ' + note : ''}`,
+            transferFail:    'Kunde inte överlåta bilen. Försök igen.',
+            transferType:    '🤝 Överlåtelse',
+            // currencySymbol injected at call site from currencies.js
+            transferNote:    (email, price, currencySymbol, note) =>
+                `Bil ${email ? 'överlåten till ' + email : 'såld (köpare ej registrerad)'}` +
+                `${price ? '. Pris: ' + parseInt(price).toLocaleString('sv-SE') + '\u00a0' + currencySymbol : ''}` +
+                `${note ? '. ' + note : ''}`,
         },
 
-        // Share
         share: {
-            copied:     '✅ Länk kopierad!',
-            copyFailed: '❌ Kunde inte kopiera länken.',
-            shareFail:  'Kunde inte dela fordonet.',
+            copied:      '✅ Länk kopierad!',
+            copyFailed:  '❌ Kunde inte kopiera länken.',
+            shareFail:   'Kunde inte dela fordonet.',
+            shareView:   '👁️ Skrivskyddad vy - delad servicebok',
+            registerCta: 'Vill du spara din egen servicebok?',
+            registerLink:'Registrera dig gratis →',
         },
 
-        // Service type options
         serviceTypes: {
-            regular:        'Ordinarie service',
-            major:          'Stora servicen',
-            oilChange:      'Oljebyte',
-            oilTop:         'Oljepåfyllning',
-            brakes:         'Bromsar',
-            brakeFluid:     'Bromsvätsketoppning',
-            tyres:          'Däck',
-            tyreSwap:       'Däckbyte (sommar/vinter)',
-            battery:        'Batteribyte',
-            bulbs:          'Glödlampor',
-            airFilter:      'Luftfilter',
-            cabinFilter:    'Kupéfilter',
-            washerFluid:    'Spolarvätska',
-            coolant:        'Kylvätska',
-            wipers:         'Torkarblad',
-            repair:         'Reparation',
-            inspection:     'Besiktning',
-            wash:           'Tvätt/vård',
-            other:          'Övrigt',
+            regular:     'Ordinarie service',
+            major:       'Stora servicen',
+            oilChange:   'Oljebyte',
+            oilTop:      'Oljepåfyllning',
+            brakes:      'Bromsar',
+            brakeFluid:  'Bromsvätsketoppning',
+            tyres:       'Däck',
+            tyreSwap:    'Däckbyte (sommar/vinter)',
+            battery:     'Batteribyte',
+            bulbs:       'Glödlampor',
+            airFilter:   'Luftfilter',
+            cabinFilter: 'Kupéfilter',
+            washerFluid: 'Spolarvätska',
+            coolant:     'Kylvätska',
+            wipers:      'Torkarblad',
+            repair:      'Reparation',
+            inspection:  'Besiktning',
+            wash:        'Tvätt/vård',
+            other:       'Övrigt',
         },
 
-        // PDF export
         pdf: {
             docTitle:       (reg) => `Servicebok - ${reg}`,
             heading:        (reg) => `🚗 Servicebok - ${reg}`,
@@ -287,32 +304,31 @@ const translations = {
             labelColor:     'Färg:',
             labelNotes:     'Anteckningar:',
             labelLocked:    '🔒 Låst vid överlåtelse:',
-            historyHeading: (n)  => `Servicehistorik (${n} poster)`,
+            historyHeading: (n) => `Servicehistorik (${n} poster)`,
             ownWork:        'Eget arbete',
             viewReceipt:    '🧾 Visa kvitto',
             footer:         (date, email) => `Exporterad från Fordonsbok · ${date} · ${email}`,
         },
 
-        // Swish (donation)
         swish: {
-            thanks:         'Tack för stödet!',
-            swishACoffee:   'Swisha en kaffe',
-            swishNumber:    'Swish-nummer',
-            copyNumber:     '📋 Kopiera nummer',
-            copied:         '✓ Kopierat!',
-            openApp:        'Öppna Swish-appen →',
-            close:          'Stäng',
+            thanks:      'Tack för stödet!',
+            swishACoffee:'Swisha en kaffe',
+            swishNumber: 'Swish-nummer',
+            copyNumber:  '📋 Kopiera nummer',
+            copied:      '✓ Kopierat!',
+            openApp:     'Öppna Swish-appen →',
+            close:       'Stäng',
         },
 
-        // Canvas gauges
         canvas: {
             kmh: 'km/h',
             odo: 'ODO  km',
         },
 
-        // Make options (keep original Swedish names + "Annat")
-        makes: {
-            other: 'Annat',
+        settings: {
+            title:         'Inställningar',
+            languageLabel: 'Språk',
+            currencyLabel: 'Valuta',
         },
     },
 
@@ -340,23 +356,23 @@ const translations = {
         },
 
         authErrors: {
-            loginFailed:        'Login failed. Please check your email and password.',
-            userNotFound:       'No account found with this email address.',
-            wrongPassword:      'Incorrect password.',
-            invalidEmail:       'Invalid email address.',
-            invalidCredential:  'Incorrect email or password.',
-            passwordMismatch:   'Passwords do not match.',
-            accountCreateFail:  'Could not create account. Please try again.',
-            emailInUse:         'An account with this email already exists.',
-            weakPassword:       'Password is too weak. Use at least 6 characters.',
+            loginFailed:       'Login failed. Please check your email and password.',
+            userNotFound:      'No account found with this email address.',
+            wrongPassword:     'Incorrect password.',
+            invalidEmail:      'Invalid email address.',
+            invalidCredential: 'Incorrect email or password.',
+            passwordMismatch:  'Passwords do not match.',
+            accountCreateFail: 'Could not create account. Please try again.',
+            emailInUse:        'An account with this email already exists.',
+            weakPassword:      'Password is too weak. Use at least 6 characters.',
         },
 
         forgotPwd: {
-            enterEmailFirst:    'Please enter your email address first.',
-            confirmSend:        (email) => `Send password reset to ${email}?`,
-            successAlert:       (email) =>
+            enterEmailFirst: 'Please enter your email address first.',
+            confirmSend:     (email) => `Send password reset to ${email}?`,
+            successAlert:    (email) =>
                 `✅ Check your inbox!\n\nA reset link has been sent to ${email}.\n\nNote: The link is valid for 1 hour and can only be used ONCE.`,
-            sendFailed:         'Could not send reset email.',
+            sendFailed:      'Could not send reset email.',
         },
 
         header: {
@@ -366,9 +382,9 @@ const translations = {
         },
 
         controls: {
-            addVehicle:  '+ Add Vehicle',
-            exportData:  'Export Data',
-            buyCoffee:   '☕ Buy a Coffee',
+            addVehicle: '+ Add Vehicle',
+            exportData: 'Export Data',
+            buyCoffee:  '☕ Buy a Coffee',
         },
 
         vehicles: {
@@ -389,36 +405,39 @@ const translations = {
         },
 
         addVehicle: {
-            modalTitle:         'New Vehicle',
-            labelRegNumber:     'Registration Number *',
-            labelMake:          'Make *',
-            placeholderMake:    'Select make',
-            labelModel:         'Model *',
-            placeholderModel:   'Select a make first',
-            placeholderModelSel:'Select model',
-            labelCustomModel:   'Enter model *',
-            labelYear:          'Year',
-            labelColor:         'Colour',
-            labelNotes:         'Notes',
-            labelPhoto:         'Vehicle photo (optional)',
-            choosePhoto:        '📷 Choose photo',
-            submitBtn:          'Save Vehicle',
-            saving:             'Saving…',
-            uploadingPhoto:     'Uploading photo…',
-            photoUploadFail:    'Could not upload photo. Vehicle will be saved without a photo.',
-            addFail:            'Could not add vehicle. Please try again.',
-            mustBeLoggedIn:     'You must be logged in to add a vehicle.',
-            other:              'Other',
+            modalTitle:          'New Vehicle',
+            labelRegNumber:      'Registration Number *',
+            labelMake:           'Make *',
+            placeholderMake:     'Select make',
+            labelModel:          'Model *',
+            placeholderModel:    'Select a make first',
+            placeholderModelSel: 'Select model',
+            labelCustomModel:    'Enter model *',
+            placeholderCustom:   'Type model name',
+            labelYear:           'Year',
+            labelColor:          'Colour',
+            placeholderColor:    'Black',
+            labelNotes:          'Notes',
+            placeholderNotes:    'Other information about the vehicle…',
+            labelPhoto:          'Vehicle photo (optional)',
+            choosePhoto:         '📷 Choose photo',
+            submitBtn:           'Save Vehicle',
+            saving:              'Saving…',
+            uploadingPhoto:      'Uploading photo…',
+            photoUploadFail:     'Could not upload photo. Vehicle will be saved without a photo.',
+            addFail:             'Could not add vehicle. Please try again.',
+            mustBeLoggedIn:      'You must be logged in to add a vehicle.',
+            other:               'Other',
         },
 
         editVehicle: {
-            modalTitle:     'Edit Vehicle',
-            currentPhoto:   'Current photo:',
-            changePhoto:    '📷 Change photo',
-            submitBtn:      'Update Vehicle',
-            updating:       'Updating…',
-            photoUploadFail:'Could not upload photo: {msg}. Other changes will be saved.',
-            updateFail:     'Could not update vehicle. Please try again.',
+            modalTitle:      'Edit Vehicle',
+            currentPhoto:    'Current photo:',
+            changePhoto:     '📷 Choose new photo',
+            submitBtn:       'Update Vehicle',
+            updating:        'Updating…',
+            photoUploadFail: 'Could not upload photo: {msg}. Other changes will be saved.',
+            updateFail:      'Could not update vehicle. Please try again.',
         },
 
         deleteVehicle: {
@@ -427,14 +446,21 @@ const translations = {
         },
 
         vehicleDetails: {
+            closeBtn:         '✕ Close service logbook',
+            backBtn:          '← Back',
             labelMake:        'Make:',
             labelModel:       'Model:',
             labelYear:        'Year:',
             labelColor:       'Colour:',
             labelNotes:       'Notes:',
             addServiceBtn:    '+ Add Service',
+            shareBtn:         '🔗 Share Logbook',
             exportPDFBtn:     '📄 Export PDF',
-            shareBtn:         '🔗 Share',
+            sellBtn:          '🤝 Sell / Transfer',
+            shareLabel:       '🔗 Share link (valid 30 days):',
+            copyLinkBtn:      'Copy',
+            shareNote:        'The recipient can view the logbook without logging in. The link does not lock the logbook.',
+            serviceHistTitle: 'Service History',
         },
 
         serviceList: {
@@ -457,48 +483,52 @@ const translations = {
         },
 
         addService: {
-            modalTitle:         'New Service',
-            labelDate:          'Date *',
-            labelType:          'Service type *',
-            placeholderType:    'Select type',
-            labelMileage:       'Mileage (km)',
-            labelPerformedBy:   'Performed by *',
-            placeholderPerf:    'Select',
-            selfOption:         'Self (own work)',
-            workshopOption:     'Garage',
-            labelWorkshop:      'Garage',
-            placeholderWorkshop:'City Garage Ltd',
-            labelCost:          'Cost (£)',
-            labelNotes:         'Notes',
-            placeholderNotes:   'Description of work carried out…',
-            labelReceipt:       'Upload receipt (image/PDF)',
-            chooseReceipt:      '🧾 Choose receipt',
-            submitBtn:          'Save Service',
-            saving:             'Saving…',
-            uploadingReceipt:   'Uploading receipt…',
-            receiptUploadFail:  'Could not upload receipt. Service will be saved without a receipt.',
-            addFail:            'Could not add service record. Please try again.',
-            mustBeLoggedIn:     'You must be logged in.',
+            modalTitle:          'New Service',
+            labelDate:           'Date *',
+            labelType:           'Service type *',
+            placeholderType:     'Select type',
+            labelMileage:        'Mileage (km)',
+            placeholderMileage:  '15000',
+            labelPerformedBy:    'Performed by *',
+            placeholderPerf:     'Select',
+            selfOption:          'Self (own work)',
+            workshopOption:      'Garage',
+            labelWorkshop:       'Garage',
+            placeholderWorkshop: 'City Garage Ltd',
+            labelCost:           'Cost ({currency})',
+            placeholderCost:     '500',
+            labelNotes:          'Notes',
+            placeholderNotes:    'Description of work carried out…',
+            labelReceipt:        'Upload receipt (image/PDF)',
+            chooseReceipt:       '🧾 Choose receipt',
+            submitBtn:           'Save Service',
+            saving:              'Saving…',
+            uploadingReceipt:    'Uploading receipt…',
+            receiptUploadFail:   'Could not upload receipt. Service will be saved without a receipt.',
+            addFail:             'Could not add service record. Please try again.',
+            mustBeLoggedIn:      'You must be logged in.',
         },
 
         editService: {
-            modalTitle:         'Edit Service',
-            labelDate:          'Date *',
-            labelType:          'Service type *',
-            placeholderType:    'Select type',
-            labelMileage:       'Mileage (km)',
-            labelPerformedBy:   'Performed by *',
-            placeholderPerf:    'Select',
-            selfOption:         'Self (own work)',
-            workshopOption:     'Garage',
-            labelWorkshop:      'Garage',
-            labelCost:          'Cost (£)',
-            labelNotes:         'Notes',
-            placeholderNotes:   'Description of work carried out…',
-            labelNewReceipt:    'Upload new receipt (replaces existing)',
-            chooseNewReceipt:   '🧾 Choose new receipt',
-            updateBtn:          'Update Service',
-            updateFail:         'Could not update service record. Please try again.',
+            modalTitle:          'Edit Service',
+            labelDate:           'Date *',
+            labelType:           'Service type *',
+            placeholderType:     'Select type',
+            labelMileage:        'Mileage (km)',
+            placeholderMileage:  '15000',
+            labelPerformedBy:    'Performed by *',
+            placeholderPerf:     'Select',
+            selfOption:          'Self (own work)',
+            workshopOption:      'Garage',
+            labelWorkshop:       'Garage',
+            labelCost:           'Cost ({currency})',
+            placeholderCost:     '500',
+            labelNotes:          'Notes',
+            placeholderNotes:    'Description of work carried out…',
+            labelNewReceipt:     'Upload new receipt (replaces existing)',
+            chooseNewReceipt:    '🧾 Choose new receipt',
+            updateBtn:           'Update Service',
+            updateFail:          'Could not update service record. Please try again.',
         },
 
         deleteService: {
@@ -511,57 +541,69 @@ const translations = {
         },
 
         sell: {
-            modalTitle:     '🤝 Transfer / Sell Vehicle',
-            labelDate:      'Transfer date *',
-            labelNewOwner:  "New owner's email (if registered)",
-            labelPrice:     'Sale price (£)',
-            labelNote:      'Note',
-            confirmBtn:     '🤝 Confirm Transfer',
-            searching:      'Looking up new owner…',
-            transferring:   'Transferring…',
-            fillDate:       'Please fill in the transfer date.',
-            noUserFound:    (email) =>
+            modalTitle:      '🤝 Sell / Transfer Vehicle',
+            warningTitle:    '⚠️ WARNING! This cannot be undone!',
+            warningBody:     'All existing service history will be permanently locked. The new owner cannot edit or delete the history — only add new records.',
+            labelNewOwner:   "New owner's email address",
+            placeholderEmail:'newowner@email.co.uk (leave blank if unknown)',
+            ownerHint:       'Leave blank if you have sold the vehicle but the buyer does not use Vehicle Logbook.',
+            labelDate:       'Transfer date *',
+            labelPrice:      'Sale price ({currency})',
+            placeholderPrice:'25000',
+            labelNote:       'Message to new owner',
+            placeholderNote: 'E.g. recent services, known issues…',
+            confirmBtn:      '🤝 Confirm Transfer',
+            searching:       'Looking up new owner…',
+            transferring:    'Transferring…',
+            fillDate:        'Please fill in the transfer date.',
+            noUserFound:     (email) =>
                 `❌ No account found with the email: ${email}\n\nLeave the field empty if the buyer does not have an account.`,
-            confirmToUser:  (email) =>
+            confirmToUser:   (email) =>
                 `Confirm transfer to ${email}?\n\nThe vehicle will be moved to their account.`,
             confirmNoUser:
                 `Confirm transfer without a registered buyer?\n\nThe vehicle will be archived as "SOLD" in your account.`,
             lockWarning:
                 `\n\nAll existing service history will be permanently locked.\n\nThis CANNOT be undone!`,
-            successToUser:  (email) => `✅ Vehicle transferred to ${email}!`,
+            successToUser:   (email) => `✅ Vehicle transferred to ${email}!`,
             successArchived: '✅ Vehicle marked as SOLD and archived!',
-            transferFail:   'Could not transfer vehicle. Please try again.',
-            transferType:   '🤝 Transfer',
-            transferNote:   (email, price, note) =>
-                `Vehicle ${email ? 'transferred to ' + email : 'sold (buyer not registered)'}${price ? '. Price: £' + parseInt(price).toLocaleString('en-GB') : ''}${note ? '. ' + note : ''}`,
+            transferFail:    'Could not transfer vehicle. Please try again.',
+            transferType:    '🤝 Transfer',
+            // currencySymbol injected at call site from currencies.js
+            transferNote:    (email, price, currencySymbol, note) =>
+                `Vehicle ${email ? 'transferred to ' + email : 'sold (buyer not registered)'}` +
+                `${price ? '. Price: ' + parseInt(price).toLocaleString('en-GB') + '\u00a0' + currencySymbol : ''}` +
+                `${note ? '. ' + note : ''}`,
         },
 
         share: {
-            copied:     '✅ Link copied!',
-            copyFailed: '❌ Could not copy the link.',
-            shareFail:  'Could not share vehicle.',
+            copied:      '✅ Link copied!',
+            copyFailed:  '❌ Could not copy the link.',
+            shareFail:   'Could not share vehicle.',
+            shareView:   '👁️ Read-only view — shared logbook',
+            registerCta: 'Want to keep your own service logbook?',
+            registerLink:'Sign up for free →',
         },
 
         serviceTypes: {
-            regular:        'Standard Service',
-            major:          'Major Service',
-            oilChange:      'Oil Change',
-            oilTop:         'Oil Top-up',
-            brakes:         'Brakes',
-            brakeFluid:     'Brake Fluid Top-up',
-            tyres:          'Tyres',
-            tyreSwap:       'Tyre Change (summer/winter)',
-            battery:        'Battery Replacement',
-            bulbs:          'Light Bulbs',
-            airFilter:      'Air Filter',
-            cabinFilter:    'Cabin Filter',
-            washerFluid:    'Washer Fluid',
-            coolant:        'Coolant',
-            wipers:         'Wiper Blades',
-            repair:         'Repair',
-            inspection:     'MOT / Inspection',
-            wash:           'Wash / Detailing',
-            other:          'Other',
+            regular:     'Standard Service',
+            major:       'Major Service',
+            oilChange:   'Oil Change',
+            oilTop:      'Oil Top-up',
+            brakes:      'Brakes',
+            brakeFluid:  'Brake Fluid Top-up',
+            tyres:       'Tyres',
+            tyreSwap:    'Tyre Change (summer/winter)',
+            battery:     'Battery Replacement',
+            bulbs:       'Light Bulbs',
+            airFilter:   'Air Filter',
+            cabinFilter: 'Cabin Filter',
+            washerFluid: 'Washer Fluid',
+            coolant:     'Coolant',
+            wipers:      'Wiper Blades',
+            repair:      'Repair',
+            inspection:  'MOT / Inspection',
+            wash:        'Wash / Detailing',
+            other:       'Other',
         },
 
         pdf: {
@@ -572,20 +614,20 @@ const translations = {
             labelColor:     'Colour:',
             labelNotes:     'Notes:',
             labelLocked:    '🔒 Locked at transfer:',
-            historyHeading: (n)  => `Service History (${n} record${n !== 1 ? 's' : ''})`,
+            historyHeading: (n) => `Service History (${n} record${n !== 1 ? 's' : ''})`,
             ownWork:        'Own work',
             viewReceipt:    '🧾 View receipt',
             footer:         (date, email) => `Exported from Vehicle Logbook · ${date} · ${email}`,
         },
 
         swish: {
-            thanks:         'Thanks for your support!',
-            swishACoffee:   'Buy a coffee',
-            swishNumber:    'Swish number',
-            copyNumber:     '📋 Copy number',
-            copied:         '✓ Copied!',
-            openApp:        'Open Swish app →',
-            close:          'Close',
+            thanks:      'Thanks for your support!',
+            swishACoffee:'Buy a coffee',
+            swishNumber: 'Swish number',
+            copyNumber:  '📋 Copy number',
+            copied:      '✓ Copied!',
+            openApp:     'Open Swish app →',
+            close:       'Close',
         },
 
         canvas: {
@@ -593,8 +635,10 @@ const translations = {
             odo: 'ODO  km',
         },
 
-        makes: {
-            other: 'Other',
+        settings: {
+            title:         'Settings',
+            languageLabel: 'Language',
+            currencyLabel: 'Currency',
         },
     },
 };
@@ -602,10 +646,6 @@ const translations = {
 // ─── Active locale ────────────────────────────────────────────────────────────
 let _locale = 'sv';
 
-/**
- * Change the active locale.
- * @param {'sv'|'en-GB'} locale
- */
 export function setLocale(locale) {
     if (!translations[locale]) {
         console.warn(`[i18n] Unknown locale "${locale}". Keeping "${_locale}".`);
@@ -614,47 +654,30 @@ export function setLocale(locale) {
     _locale = locale;
 }
 
-/** Return the current locale string. */
-export function getLocale() {
-    return _locale;
-}
+export function getLocale() { return _locale; }
 
 /**
- * Look up a translation by dot-separated key, e.g. t('auth.loginBtn').
- * If the value is a function, pass additional args: t('vehicles.servicePosts', 3).
+ * Resolve a dot-separated translation key.
+ * Function values are called with the extra args you pass.
+ *
+ *   t('addService.labelCost')        → "Kostnad ({currency})"
+ *   t('vehicles.servicePosts', 3)    → "3 serviceposter"
  *
  * Falls back to Swedish if the key is missing in the active locale.
- *
- * @param {string} key
- * @param {...*}   args  – forwarded to function values
- * @returns {string}
  */
 export function t(key, ...args) {
-    const parts  = key.split('.');
-    const locale = translations[_locale];
-    const sv     = translations['sv'];
-
-    function resolve(obj, keys) {
-        return keys.reduce((o, k) => (o && o[k] !== undefined ? o[k] : undefined), obj);
-    }
-
-    let value = resolve(locale, parts) ?? resolve(sv, parts);
-
+    const parts = key.split('.');
+    const resolve = (obj) =>
+        parts.reduce((o, k) => (o && o[k] !== undefined ? o[k] : undefined), obj);
+    let value = resolve(translations[_locale]) ?? resolve(translations['sv']);
     if (value === undefined) {
         console.warn(`[i18n] Missing translation key: "${key}"`);
         return key;
     }
-
     return typeof value === 'function' ? value(...args) : value;
 }
 
-/**
- * Convenience: return the entire namespace object for a given top-level key.
- * Useful when you want to destructure multiple strings from one section.
- *
- * @param {string} namespace  e.g. 'auth', 'addVehicle'
- * @returns {object}
- */
+/** Return an entire namespace object (useful for destructuring). */
 export function ns(namespace) {
     return translations[_locale]?.[namespace] ?? translations['sv'][namespace] ?? {};
 }

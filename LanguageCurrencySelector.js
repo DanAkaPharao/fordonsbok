@@ -62,23 +62,29 @@ function injectStyles() {
         .i18n-lang-btn {
             all: unset;
             cursor: pointer;
-            font-size: 1.45rem;
+            font-size: 1.3rem;
             line-height: 1;
             border-radius: 4px;
-            padding: 2px 4px;
-            transition: transform 0.15s, opacity 0.15s;
+            padding: 2px 6px;
+            transition: opacity 0.15s;
             opacity: 0.45;
             position: relative;
+            /* Fast storlek — förhindrar layout-shift mellan flaggor */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2.4rem;
+            height: 2rem;
+            overflow: hidden;
+            box-sizing: border-box;
         }
         .i18n-lang-btn:hover {
             opacity: 0.85;
-            transform: scale(1.12);
         }
         .i18n-lang-btn.active {
             opacity: 1;
-            transform: scale(1.18);
-            /* glödeffekt matchar appens accent */
-            filter: drop-shadow(0 0 5px rgba(255,165,0,0.7));
+            outline: 2px solid rgba(255,165,0,0.7);
+            outline-offset: 2px;
         }
         .i18n-lang-btn:focus-visible {
             outline: 2px solid rgba(255,165,0,0.8);
@@ -135,6 +141,27 @@ function injectStyles() {
     document.head.appendChild(style);
 }
 
+// ─── Enda globala click-lyssnare för språkknappar (delegerad, sätts upp en gång) ──
+let _localeListenerReady = false;
+function setupLocaleListener() {
+    if (_localeListenerReady) return;
+    _localeListenerReady = true;
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.i18n-lang-btn');
+        if (!btn) return;
+        const newLocale = btn.dataset.locale;
+        if (!newLocale || newLocale === getLocale()) return;
+        setLocale(newLocale);
+        localStorage.setItem(LS_LOCALE, newLocale);
+        document.querySelectorAll('.i18n-lang-btn').forEach(b => {
+            const isActive = b.dataset.locale === newLocale;
+            b.classList.toggle('active', isActive);
+            b.setAttribute('aria-pressed', isActive);
+        });
+        document.dispatchEvent(new CustomEvent('localeChanged', { detail: { locale: newLocale } }));
+    });
+}
+
 // ─── Bygg widget-HTML ─────────────────────────────────────────────────────────
 function buildWidget(container) {
     const currentLocale   = getLocale();
@@ -171,18 +198,7 @@ function buildWidget(container) {
 
     // ── Händelselyssnare ──────────────────────────────────────────────────────
 
-    // Språkbyte
-    container.querySelectorAll('.i18n-lang-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const newLocale = btn.dataset.locale;
-            if (newLocale === getLocale()) return;
-            setLocale(newLocale);
-            localStorage.setItem(LS_LOCALE, newLocale);
-            // Rita om widgeten och meddela resten av appen
-            buildWidget(container);
-            document.dispatchEvent(new CustomEvent('localeChanged', { detail: { locale: newLocale } }));
-        });
-    });
+    // Klick hanteras av delegerad lyssnare på document-nivå (setupLocaleListener)
 
     // Valutabyte
     container.querySelector('.i18n-currency-select').addEventListener('change', (e) => {
@@ -205,6 +221,7 @@ function buildWidget(container) {
  */
 export function mountSelector(target) {
     injectStyles();
+    setupLocaleListener();
     const container = typeof target === 'string'
         ? document.querySelector(target)
         : target;
@@ -216,14 +233,7 @@ export function mountSelector(target) {
     buildWidget(container);
 }
 
-// ─── Auto-mount om data-attribut finns ───────────────────────────────────────
-// Lägg till  data-i18n-selector  på valfritt element i HTML så monteras
-// widgeten automatiskt utan att behöva anropa mountSelector() manuellt.
-//
-//   <div data-i18n-selector></div>
-//
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('[data-i18n-selector]').forEach(mountSelector);
-});
+// Auto-mount hanteras nu från script.js för att säkerställa
+// att alla moduler delar samma instans av translations.js och currencies.js
 
 export default { mountSelector };

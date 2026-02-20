@@ -407,6 +407,17 @@
         clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
     }
 
+    .vehicle-photo-full {
+        width: 100%;
+        height: auto;
+        max-height: 400px;
+        object-fit: contain;
+        margin-bottom: 15px;
+        border: 2px solid var(--border);
+        clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        background: var(--bg-input);
+    }
+
     .no-photo {
         width: 100%;
         height: 200px;

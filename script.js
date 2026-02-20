@@ -2,8 +2,9 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
-import { t, getLocale } from './translations.js';
-import { getCurrencySymbol, formatAmount } from './currencies.js';
+import { t, getLocale, setLocale } from './translations.js';
+import { getCurrencySymbol, getCurrencyCode, formatAmount } from './currencies.js';
+import { mountSelector } from './LanguageCurrencySelector.js';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -33,23 +34,46 @@ window.firebaseModules = {
 };
 
 // ─── i18n: uppdatera alla data-i18n element + re-rendera ─────────────────────
+// Debounce so multiple simultaneous localeChanged events (two widgets) only fire once
 function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.dataset.i18n;
         let val = t(key);
-        // Byt ut {currency} mot aktiv valutasymbol
-        if (val.includes('{currency}')) {
+        if (val && val.includes('{currency}')) {
             val = val.replace('{currency}', getCurrencySymbol());
         }
-        el.textContent = val;
+        if (el.textContent !== val) el.textContent = val;
     });
     document.documentElement.lang = getLocale();
-    if (vehicles.length > 0) renderVehicles();
 }
 
-document.addEventListener('DOMContentLoaded', () => applyTranslations());
-document.addEventListener('localeChanged',    () => applyTranslations());
-document.addEventListener('currencyChanged',  () => { if (vehicles.length > 0) renderVehicles(); });
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-i18n-selector]').forEach(el => mountSelector(el));
+    queueMicrotask(() => applyTranslations());
+});
+
+document.addEventListener('localeChanged', () => {
+    // Kör i nästa animation frame så klick-eventet är helt klart först
+    requestAnimationFrame(() => {
+        applyTranslations();
+        if (vehicles.length > 0) renderVehicles();
+        if (currentVehicleId && document.getElementById('vehicleDetailsModal').classList.contains('active')) {
+            const vehicle = vehicles.find(v => v.id === currentVehicleId);
+            if (vehicle) openVehicleDetails(vehicle.id);
+        }
+    });
+});
+
+document.addEventListener('currencyChanged', () => {
+    requestAnimationFrame(() => {
+        applyTranslations();
+        if (vehicles.length > 0) renderVehicles();
+        if (currentVehicleId && document.getElementById('vehicleDetailsModal').classList.contains('active')) {
+            const vehicle = vehicles.find(v => v.id === currentVehicleId);
+            if (vehicle) renderServiceList(vehicle);
+        }
+    });
+});
 
 // Auth state observer
 onAuthStateChanged(auth, async (user) => {
@@ -533,15 +557,15 @@ function openVehicleDetails(id) {
     document.getElementById('detailsVehicleTitle').textContent = vehicle.regNumber;
     document.getElementById('vehicleDetailsContent').innerHTML = `
         ${vehicle.photoURL
-            ? `<img src="${vehicle.photoURL}" alt="${vehicle.regNumber}" class="vehicle-photo" style="margin-bottom: 20px;">`
+            ? `<img src="${vehicle.photoURL}" alt="${vehicle.regNumber}" class="vehicle-photo-full" style="margin-bottom: 20px;">`
             : `<div class="no-photo" style="margin-bottom: 20px;">🚗</div>`
         }
         <div class="vehicle-info">
-            <p><strong>Märke:</strong>${vehicle.make}</p>
-            <p><strong>Modell:</strong>${vehicle.model}</p>
-            ${vehicle.year ? `<p><strong>År:</strong>${vehicle.year}</p>` : ''}
-            ${vehicle.color ? `<p><strong>Färg:</strong>${vehicle.color}</p>` : ''}
-            ${vehicle.notes ? `<p style="margin-top: 15px;"><strong>Anteckningar:</strong><br>${vehicle.notes}</p>` : ''}
+            <p><strong>${t('vehicleDetails.labelMake')}</strong>${vehicle.make}</p>
+            <p><strong>${t('vehicleDetails.labelModel')}</strong>${vehicle.model}</p>
+            ${vehicle.year ? `<p><strong>${t('vehicleDetails.labelYear')}</strong>${vehicle.year}</p>` : ''}
+            ${vehicle.color ? `<p><strong>${t('vehicleDetails.labelColor')}</strong>${vehicle.color}</p>` : ''}
+            ${vehicle.notes ? `<p style="margin-top: 15px;"><strong>${t('vehicleDetails.labelNotes')}</strong><br>${vehicle.notes}</p>` : ''}
         </div>
     `;
     renderServiceList(vehicle);
@@ -582,7 +606,7 @@ async function renderServiceList(vehicle) {
                 <span><strong>${t('serviceList.labelDate')}</strong> ${new Date(service.date).toLocaleDateString(getLocale())}</span>
                 ${service.performedBy ? `<span style="color: ${service.performedBy === 'self' ? 'var(--success)' : 'var(--text-secondary)'}"><strong>${t('serviceList.labelPerformed')}</strong> ${service.performedBy === 'self' ? t('serviceList.selfWork') : t('serviceList.workshopWork')}</span>` : ''}
                 ${service.mileage ? `<span><strong>${t('serviceList.labelMileage')}</strong> ${service.mileage.toLocaleString(getLocale())} km</span>` : ''}
-                ${service.cost ? `<span><strong>${t('serviceList.labelCost')}</strong> ${formatAmount(service.cost)}</span>` : ''}
+                ${service.cost ? `<span><strong>${t('serviceList.labelCost')}</strong> ${formatAmount(service.cost, service.currency)}</span>` : ''}
                 ${service.workshop ? `<span><strong>${t('serviceList.labelWorkshop')}</strong> ${service.workshop}</span>` : ''}
             </div>
             ${service.notes ? `<div class="service-notes">${service.notes}</div>` : ''}
@@ -627,6 +651,7 @@ async function addService(event) {
         type: document.getElementById('serviceType').value,
         mileage: parseInt(document.getElementById('mileage').value) || null,
         cost: parseInt(document.getElementById('cost').value) || null,
+        currency: getCurrencyCode(),
         performedBy: performedBy,
         workshop: performedBy === 'workshop' ? document.getElementById('workshop').value : null,
         notes: document.getElementById('serviceNotes').value,
@@ -725,6 +750,7 @@ async function updateService(event) {
         type: document.getElementById('editServiceType').value,
         mileage: parseInt(document.getElementById('editServiceMileage').value) || null,
         cost: parseInt(document.getElementById('editServiceCost').value) || null,
+        currency: getCurrencyCode(),
         performedBy: performedBy,
         workshop: performedBy === 'workshop' ? document.getElementById('editWorkshop').value : null,
         notes: document.getElementById('editServiceNotes').value,

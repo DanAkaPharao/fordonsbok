@@ -59,17 +59,18 @@ export function getCurrencyCode() { return _currencyCode; }
 export function getCurrencySymbol() { return getCurrency().symbol; }
 
 /**
- * Formatera ett tal med aktiv valuta.
- * Symbolen placeras enligt konvention för varje valuta.
+ * Formatera ett tal med angiven eller aktiv valuta.
  *
  * @param {number} amount
- * @param {object} [opts]
- * @param {boolean} [opts.showCode=false]  – visa ISO-kod istället för symbol
- * @returns {string}  t.ex. "2 500 kr", "€ 2.500", "£2,500"
+ * @param {string} [currencyCode]  – ISO-kod för specifik valuta (t.ex. från service.currency)
+ *                                   Om utelämnad används aktiv valuta.
+ * @returns {string}  t.ex. "2 500 kr", "€2,500", "£2,500"
  */
-export function formatAmount(amount, { showCode = false } = {}) {
+export function formatAmount(amount, currencyCode) {
     if (amount == null || isNaN(amount)) return '—';
-    const currency = getCurrency();
+    const currency = currencyCode
+        ? (ALL_CURRENCIES.find(c => c.code === currencyCode) || getCurrency())
+        : getCurrency();
     try {
         return new Intl.NumberFormat(currency.locale, {
             style:    'currency',
@@ -78,11 +79,8 @@ export function formatAmount(amount, { showCode = false } = {}) {
             maximumFractionDigits: 0,
         }).format(amount);
     } catch {
-        // Fallback ifall Intl inte stöder valutan
         const formatted = amount.toLocaleString(currency.locale);
-        return showCode
-            ? `${formatted}\u00a0${currency.code}`
-            : `${formatted}\u00a0${currency.symbol}`;
+        return `${formatted}\u00a0${currency.symbol}`;
     }
 }
 

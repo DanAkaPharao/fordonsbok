@@ -63,7 +63,7 @@
     </div>
 
     <!-- App Screen -->
-    <div id="appScreen">
+    <div id="appScreen" style="display:none">
         <div class="container">
             <header>
                 <div class="header-left">
@@ -190,28 +190,28 @@
                 <h2 id="detailsVehicleTitle"></h2>
                 <button class="close-btn" onclick="closeModal('vehicleDetailsModal')" style="font-size: 2rem; padding: 5px 15px; min-width: 50px; min-height: 50px;">&times;</button>
             </div>
-            <button onclick="closeModal('vehicleDetailsModal')" style="width: 100%; padding: 15px; margin-bottom: 15px; background: rgba(255,50,50,0.2); border: 2px solid rgba(255,50,50,0.4); color: #ff6464; font-size: 1.1rem; cursor: pointer;">✕ Stäng servicebok</button>
+            <button onclick="closeModal('vehicleDetailsModal')" style="width: 100%; padding: 15px; margin-bottom: 15px; background: rgba(255,50,50,0.2); border: 2px solid rgba(255,50,50,0.4); color: #ff6464; font-size: 1.1rem; cursor: pointer;"><span data-i18n="vehicleDetails.closeBtn">✕ Stäng servicebok</span></button>
             <div id="vehicleDetailsContent"></div>
             <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
-                <button onclick="openAddServiceModal()">+ Lägg till service</button>
-                <button class="secondary" onclick="shareVehicle()" style="background: rgba(0,150,255,0.2); border-color: rgba(0,150,255,0.5); color: #4db8ff;">🔗 Dela servicebok</button>
-                <button class="secondary" onclick="exportPDF()" style="background: rgba(0,200,100,0.2); border-color: rgba(0,200,100,0.5); color: #00c864;">📄 Exportera PDF</button>
-                <button class="secondary" onclick="openSellVehicleModal()" style="background: rgba(255,50,50,0.2); border-color: rgba(255,50,50,0.5); color: #ff6464;">🤝 Sälj / Överlåt</button>
+                <button onclick="openAddServiceModal()"><span data-i18n="vehicleDetails.addServiceBtn">+ Lägg till service</span></button>
+                <button class="secondary" onclick="shareVehicle()" style="background: rgba(0,150,255,0.2); border-color: rgba(0,150,255,0.5); color: #4db8ff;"><span data-i18n="vehicleDetails.shareBtn">🔗 Dela servicebok</span></button>
+                <button class="secondary" onclick="exportPDF()" style="background: rgba(0,200,100,0.2); border-color: rgba(0,200,100,0.5); color: #00c864;"><span data-i18n="vehicleDetails.exportPDFBtn">📄 Exportera PDF</span></button>
+                <button class="secondary" onclick="openSellVehicleModal()" style="background: rgba(255,50,50,0.2); border-color: rgba(255,50,50,0.5); color: #ff6464;"><span data-i18n="vehicleDetails.sellBtn">🤝 Sälj / Överlåt</span></button>
             </div>
             <div id="shareResult" style="display:none; margin-top: 15px; padding: 15px; background: rgba(0,150,255,0.1); border: 1px solid rgba(0,150,255,0.3); font-size: 0.85rem;">
-                <p style="margin-bottom: 8px; color: #4db8ff;">🔗 Delningslänk (giltig 30 dagar):</p>
+                <p style="margin-bottom: 8px; color: #4db8ff;"><span data-i18n="vehicleDetails.shareLabel">🔗 Delningslänk (giltig 30 dagar):</span></p>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     <input id="shareUrl" type="text" readonly style="flex: 1; font-size: 0.75rem; padding: 8px; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(0,150,255,0.3);">
-                    <button onclick="copyShareLink()" style="padding: 8px 12px; font-size: 0.75rem; width: auto; clip-path: none;">Kopiera</button>
+                    <button onclick="copyShareLink()" style="padding: 8px 12px; font-size: 0.75rem; width: auto; clip-path: none;"><span data-i18n="vehicleDetails.copyLinkBtn">Kopiera</span></button>
                 </div>
                 <p style="margin-top: 8px; color: var(--text-secondary); font-size: 0.75rem;">Mottagaren kan se serviceboken utan att logga in. Länken låser inte boken.</p>
             </div>
             <div class="service-list">
-                <h3 style="margin-bottom: 20px; color: var(--accent-yellow);">Servicehistorik</h3>
+                <h3 style="margin-bottom: 20px; color: var(--accent-yellow);"><span data-i18n="vehicleDetails.serviceHistTitle">Servicehistorik</span></h3>
                 <div id="serviceListContainer"></div>
             </div>
             <div style="margin-top: 30px; text-align: center;">
-                <button onclick="closeModal('vehicleDetailsModal')" style="padding: 12px 40px; background: rgba(100,100,100,0.3); border-color: rgba(150,150,150,0.5); color: white;">← Tillbaka</button>
+                <button onclick="closeModal('vehicleDetailsModal')" style="padding: 12px 40px; background: rgba(100,100,100,0.3); border-color: rgba(150,150,150,0.5); color: white;"><span data-i18n="vehicleDetails.backBtn">← Tillbaka</span></button>
             </div>
         </div>
     </div>
@@ -220,7 +220,7 @@
     <div id="sellVehicleModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>🤝 Sälj / Överlåt fordon</h2>
+                <h2><span data-i18n="sell.modalTitle">🤝 Sälj / Överlåt fordon</span></h2>
                 <button class="close-btn" onclick="closeModal('sellVehicleModal')">&times;</button>
             </div>
             <div style="background: rgba(255,50,50,0.1); border: 1px solid rgba(255,50,50,0.3); padding: 15px; margin-bottom: 20px; font-size: 0.85rem;">
@@ -515,7 +515,7 @@
     <div id="receiptModal" class="modal">
         <div class="modal-content" style="max-width: 90%; max-height: 90vh;">
             <div class="modal-header">
-                <h2>🧾 Kvitto</h2>
+                <h2><span data-i18n="receiptModal.title">🧾 Kvitto</span></h2>
                 <button class="close-btn" onclick="closeModal('receiptModal')">&times;</button>
             </div>
             <div style="overflow: auto; max-height: 75vh;">
@@ -526,10 +526,8 @@
     </div>
 
 
-    <!-- Firebase SDK (modular) -->
+    <!-- Firebase SDK (modular) — allt i ett module entry point -->
     <script type="module" src="script.js"></script>
-    <!-- i18n + currency selector (must be module, loaded before script.js uses it) -->
-    <script type="module" src="LanguageCurrencySelector.js"></script>
     <!-- Background canvas animation -->
     <script src="canvas.js"></script>
 </body>
