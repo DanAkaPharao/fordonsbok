@@ -539,16 +539,17 @@ function openEditVehicleModal(id) {
     }
 
     document.getElementById('editYear').value  = vehicle.year  || '';
+    document.getElementById('editVehicleMileage').value = vehicle.mileage || '';
     document.getElementById('editColor').value = vehicle.color || '';
     document.getElementById('editNotes').value = vehicle.notes || '';
     const currentPhotoDiv = document.getElementById('editCurrentPhoto');
     if (vehicle.photoURL) {
         currentPhotoDiv.innerHTML = `
-            <p style="color: var(--text-secondary); margin-bottom: 8px; font-size: 0.85rem;">Nuvarande foto:</p>
+            <p style="color: var(--text-secondary); margin-bottom: 8px; font-size: 0.85rem;">${t('editVehicle.currentPhoto')}</p>
             <img src="${vehicle.photoURL}" style="max-width: 100%; max-height: 200px; border: 2px solid var(--border);" />
         `;
     } else {
-        currentPhotoDiv.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.85rem;">Inget foto uppladdad</p>';
+        currentPhotoDiv.innerHTML = `<p style="color: var(--text-secondary); font-size: 0.85rem;">${t('editVehicle.noPhoto')}</p>`;
     }
     document.getElementById('editPhotoPreview').style.display = 'none';
     openModal('editVehicleModal');
@@ -556,22 +557,22 @@ function openEditVehicleModal(id) {
 
 async function updateVehicle(event) {
     event.preventDefault();
-    if (!window.currentUser) { alert('Du måste vara inloggad.'); return; }
+    if (!window.currentUser) { alert(t('addVehicle.mustBeLoggedIn')); return; }
     const btn = document.getElementById('updateVehicleBtn');
     btn.disabled = true;
-    btn.textContent = 'Uppdaterar...';
+    btn.textContent = t('editVehicle.updating');
     const vehicleId = document.getElementById('editVehicleId').value;
     const vehicle = vehicles.find(v => v.id === vehicleId);
     const vehicleType = document.getElementById('editVehicleType').value || vehicle.vehicleType || 'car';
     const makeValue   = getMakeValue('edit');
     const modelValue  = getModelValue('edit');
-    if (!makeValue) { alert('Ange ett märke.'); btn.disabled = false; btn.textContent = 'Uppdatera fordon'; return; }
-    if (!modelValue) { alert('Ange en modell.'); btn.disabled = false; btn.textContent = 'Uppdatera fordon'; return; }
+    if (!makeValue) { alert(t('editVehicle.mustHaveMake')); btn.disabled = false; btn.textContent = t('editVehicle.submitBtn'); return; }
+    if (!modelValue) { alert(t('editVehicle.mustHaveModel')); btn.disabled = false; btn.textContent = t('editVehicle.submitBtn'); return; }
     let photoURL = vehicle.photoURL || null;
     const photoFile = document.getElementById('editVehiclePhoto').files[0];
     if (photoFile) {
         try {
-            btn.textContent = 'Laddar upp foto...';
+            btn.textContent = t('editVehicle.uploadingPhoto');
             if (!window.storage) throw new Error('Firebase Storage is not initialized');
             if (vehicle.photoURL) {
                 try {
@@ -588,7 +589,7 @@ async function updateVehicle(event) {
             photoURL = await getDownloadURL(snapshot.ref);
         } catch (error) {
             console.error('Error uploading photo:', error);
-            alert(`Kunde inte ladda upp foto: ${error.message}. Övriga ändringar sparas.`);
+            alert(t('editVehicle.photoUploadFail').replace('{msg}', error.message));
         }
     }
     const updatedData = {
@@ -597,6 +598,7 @@ async function updateVehicle(event) {
         make:        makeValue,
         model:       modelValue,
         year:        document.getElementById('editYear').value,
+        mileage:     document.getElementById('editVehicleMileage').value ? parseInt(document.getElementById('editVehicleMileage').value) : null,
         color:       document.getElementById('editColor').value,
         notes:       document.getElementById('editNotes').value,
         photoURL:    photoURL,
@@ -609,10 +611,10 @@ async function updateVehicle(event) {
         document.getElementById('editVehicleForm').reset();
     } catch (error) {
         console.error('Error updating vehicle:', error);
-        alert('Kunde inte uppdatera fordon. Försök igen.');
+        alert(t('editVehicle.updateFail'));
     } finally {
         btn.disabled = false;
-        btn.textContent = 'Uppdatera fordon';
+        btn.textContent = t('editVehicle.submitBtn');
     }
 }
 
@@ -674,10 +676,12 @@ function renderVehicles() {
             <div style="display: flex; gap: 6px; margin-bottom: 15px; flex-wrap: wrap;">
                 <button class="delete-btn" style="background: rgba(255, 165, 0, 0.2); border-color: rgba(255, 165, 0, 0.4); color: #ffa500; font-size: 0.75rem; padding: 8px 12px;" onclick="event.stopPropagation(); openEditVehicleModal('${vehicle.id}')">${t('vehicles.editBtn')}</button>
                 <button class="delete-btn" style="background: rgba(255,50,50,0.2); border-color: rgba(255,50,50,0.4); color: #ff6464; font-size: 0.75rem; padding: 8px 12px;" onclick="event.stopPropagation(); openSellVehicleModal('${vehicle.id}')">${t('vehicles.sellBtn')}</button>
+                <button class="delete-btn" style="background: rgba(255,215,0,0.15); border-color: rgba(255,215,0,0.4); color: var(--accent-yellow); font-size: 0.75rem; padding: 8px 12px;" onclick="event.stopPropagation(); openStatsModal('${vehicle.id}')">📊</button>
             </div>
             ` : `
             <div style="display: flex; gap: 6px; margin-bottom: 15px;">
                 <button class="delete-btn" style="font-size: 0.75rem; padding: 8px 12px;" onclick="event.stopPropagation(); deleteVehicle('${vehicle.id}')">🗑️</button>
+                <button class="delete-btn" style="background: rgba(255,215,0,0.15); border-color: rgba(255,215,0,0.4); color: var(--accent-yellow); font-size: 0.75rem; padding: 8px 12px;" onclick="event.stopPropagation(); openStatsModal('${vehicle.id}')">📊</button>
             </div>
             `}
             <div class="vehicle-info">
@@ -688,6 +692,15 @@ function renderVehicles() {
                 ${vehicle.sold ? `<p style="color: #ff4444;"><strong>${t('vehicles.labelSold')}</strong> ${new Date(vehicle.transferDate).toLocaleDateString(getLocale())}</p>` : ''}
             </div>
             <span class="service-count">${t('vehicles.servicePosts', vehicle.services?.length || 0)} ${vehicle.locked ? '🔒' : ''}</span>
+            ${(vehicle.services?.length > 0) ? (() => {
+                const svcs = vehicle.services;
+                const totalCost = svcs.reduce((s, x) => s + (x.cost || 0), 0);
+                const lastDate = svcs.map(x => x.date).filter(Boolean).sort().reverse()[0];
+                return `<div class="vehicle-stats-strip">
+                    ${totalCost > 0 ? `<span>💰 ${formatAmount(totalCost)}</span>` : ''}
+                    ${lastDate ? `<span>🔧 ${new Date(lastDate).toLocaleDateString(getLocale())}</span>` : ''}
+                </div>`;
+            })() : ''}
         </div>
     `}).join('');
 }
@@ -727,6 +740,7 @@ async function addVehicle(event) {
         make:        makeValue,
         model:       modelValue,
         year:        document.getElementById('year').value,
+        mileage:     document.getElementById('vehicleMileage').value ? parseInt(document.getElementById('vehicleMileage').value) : null,
         color:       document.getElementById('color').value,
         notes:       document.getElementById('notes').value,
         photoURL:    photoURL,
@@ -777,6 +791,7 @@ function openVehicleDetails(id) {
             <p><strong>${t('vehicleDetails.labelMake')}</strong>${vehicle.make}</p>
             <p><strong>${t('vehicleDetails.labelModel')}</strong>${vehicle.model}</p>
             ${vehicle.year ? `<p><strong>${t('vehicleDetails.labelYear')}</strong>${vehicle.year}</p>` : ''}
+            ${vehicle.mileage ? `<p><strong>${t('vehicleDetails.labelMileage')}</strong>${vehicle.mileage.toLocaleString(getLocale())} km</p>` : ''}
             ${vehicle.color ? `<p><strong>${t('vehicleDetails.labelColor')}</strong>${vehicle.color}</p>` : ''}
             ${vehicle.notes ? `<p style="margin-top: 15px;"><strong>${t('vehicleDetails.labelNotes')}</strong><br>${vehicle.notes}</p>` : ''}
         </div>
@@ -786,28 +801,32 @@ function openVehicleDetails(id) {
     // Visa rätt knappar beroende på om fordonet är sålt/låst
     const btnContainer = document.getElementById('vehicleActionButtons');
     if (vehicle.sold || vehicle.locked) {
-        // Sålt fordon — dela + PDF, ej redigera/sälja
         btnContainer.innerHTML = `
             <button class="secondary" onclick="shareVehicle()" style="background: rgba(0,150,255,0.2); border-color: rgba(0,150,255,0.5); color: #4db8ff;">
-                <span data-i18n="vehicleDetails.shareBtn">🔗 Dela servicebok</span>
+                🔗 ${t('vehicleDetails.shareBtn').replace('🔗 ', '')}
             </button>
             <button class="secondary" onclick="exportPDF()" style="background: rgba(0,200,100,0.2); border-color: rgba(0,200,100,0.5); color: #00c864;">
-                <span data-i18n="vehicleDetails.exportPDFBtn">📄 Exportera PDF</span>
+                📄 ${t('vehicleDetails.exportPDFBtn').replace('📄 ', '')}
             </button>
-            <p style="color: #888; font-size: 0.8rem; width: 100%; margin-top: 5px;">🔒 Fordonet är överlåtet — servicehistorik är låst</p>
+            <button class="secondary" onclick="openQrModal()" style="background: rgba(255,215,0,0.15); border-color: rgba(255,215,0,0.4); color: var(--accent-yellow);">
+                🔲 ${t('vehicleDetails.qrBtn')}
+            </button>
+            <p style="color: #888; font-size: 0.8rem; width: 100%; margin-top: 5px;">🔒 ${t('vehicleDetails.lockedNote')}</p>
         `;
     } else {
-        // Aktivt fordon — alla knappar
         btnContainer.innerHTML = `
-            <button onclick="openAddServiceModal()"><span data-i18n="vehicleDetails.addServiceBtn">+ Lägg till service</span></button>
+            <button onclick="openAddServiceModal()">+ ${t('vehicleDetails.addServiceBtn').replace('+ ', '')}</button>
             <button class="secondary" onclick="shareVehicle()" style="background: rgba(0,150,255,0.2); border-color: rgba(0,150,255,0.5); color: #4db8ff;">
-                <span data-i18n="vehicleDetails.shareBtn">🔗 Dela servicebok</span>
+                🔗 ${t('vehicleDetails.shareBtn').replace('🔗 ', '')}
             </button>
             <button class="secondary" onclick="exportPDF()" style="background: rgba(0,200,100,0.2); border-color: rgba(0,200,100,0.5); color: #00c864;">
-                <span data-i18n="vehicleDetails.exportPDFBtn">📄 Exportera PDF</span>
+                📄 ${t('vehicleDetails.exportPDFBtn').replace('📄 ', '')}
+            </button>
+            <button class="secondary" onclick="openQrModal()" style="background: rgba(255,215,0,0.15); border-color: rgba(255,215,0,0.4); color: var(--accent-yellow);">
+                🔲 ${t('vehicleDetails.qrBtn')}
             </button>
             <button class="secondary" onclick="openSellVehicleModal('${vehicle.id}')" style="background: rgba(255,50,50,0.2); border-color: rgba(255,50,50,0.5); color: #ff6464;">
-                <span data-i18n="vehicleDetails.sellBtn">🤝 Sälj / Överlåt</span>
+                🤝 ${t('vehicleDetails.sellBtn').replace('🤝 ', '')}
             </button>
         `;
     }
@@ -1265,6 +1284,34 @@ function exportPDF() {
     const vehicle = vehicles.find(v => v.id === currentVehicleId);
     if (!vehicle) return;
     const services = (vehicle.services || []).sort((a,b) => new Date(b.date) - new Date(a.date));
+    const svcs = services.filter(s => s.performedBy !== 'transfer');
+
+    // Beräkna statistik
+    const totalCost = svcs.reduce((s, x) => s + (x.cost || 0), 0);
+    const lastDate = svcs.map(x => x.date).filter(Boolean).sort().reverse()[0];
+
+    // Kostnad per år
+    const byYear = {};
+    const countByYear = {};
+    svcs.forEach(s => {
+        if (!s.date) return;
+        const yr = s.date.split('-')[0];
+        countByYear[yr] = (countByYear[yr] || 0) + 1;
+        if (s.cost) byYear[yr] = (byYear[yr] || 0) + s.cost;
+    });
+    const years = Object.keys(countByYear).sort();
+
+    // Servicetyper
+    const byType = {};
+    const countByType = {};
+    svcs.forEach(s => {
+        if (!s.type) return;
+        countByType[s.type] = (countByType[s.type] || 0) + 1;
+        if (s.cost) byType[s.type] = (byType[s.type] || 0) + s.cost;
+    });
+    const topTypes = Object.keys(countByType).sort((a,b) => (byType[b]||0) - (byType[a]||0)).slice(0, 10);
+    const maxTypeVal = byType[topTypes[0]] || 1;
+
     const html = `
         <!DOCTYPE html>
         <html>
@@ -1274,7 +1321,7 @@ function exportPDF() {
             <style>
                 body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #222; }
                 h1 { color: #FF4D00; border-bottom: 3px solid #FF4D00; padding-bottom: 10px; }
-                h2 { color: #333; margin-top: 30px; }
+                h2 { color: #333; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
                 .vehicle-info { background: #f5f5f5; padding: 15px; margin-bottom: 20px; border-left: 4px solid #FF4D00; }
                 .vehicle-info p { margin: 4px 0; }
                 .service-item { border: 1px solid #ddd; padding: 12px; margin-bottom: 10px; border-left: 4px solid #FF4D00; }
@@ -1285,6 +1332,21 @@ function exportPDF() {
                 .locked-badge { font-size: 0.75rem; color: #999; }
                 .transfer { background: #fff3f3; border-left-color: #ff0000; }
                 .footer { margin-top: 40px; font-size: 0.8rem; color: #999; border-top: 1px solid #ddd; padding-top: 15px; text-align: center; }
+                /* Statistik */
+                .stats-kpi-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+                .stats-kpi { flex: 1; min-width: 140px; background: #fff8f5; border: 1px solid #ffcdb8; padding: 12px 16px; }
+                .stats-kpi-label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
+                .stats-kpi-value { font-size: 1.15rem; font-weight: bold; color: #FF4D00; }
+                .year-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.88rem; }
+                .year-table th { background: #FF4D00; color: white; padding: 7px 12px; text-align: left; }
+                .year-table td { padding: 6px 12px; border-bottom: 1px solid #eee; }
+                .year-table tr:nth-child(even) td { background: #fafafa; }
+                .type-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; }
+                .type-name { width: 180px; flex-shrink: 0; }
+                .type-bar-wrap { flex: 1; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+                .type-bar { height: 100%; background: #FF4D00; border-radius: 4px; }
+                .type-count { width: 30px; text-align: right; color: #888; font-size: 0.78rem; }
+                .type-cost { width: 90px; text-align: right; font-weight: bold; color: #333; font-size: 0.82rem; }
             </style>
         </head>
         <body>
@@ -1296,6 +1358,48 @@ function exportPDF() {
                 ${vehicle.notes ? `<p><strong>${t('pdf.labelNotes')}</strong> ${vehicle.notes}</p>` : ''}
                 ${vehicle.locked ? `<p><strong>${t('pdf.labelLocked')}</strong> ${new Date(vehicle.lockedAt).toLocaleDateString(getLocale())}</p>` : ''}
             </div>
+
+            <h2>📊 Statistik</h2>
+            <div class="stats-kpi-row">
+                <div class="stats-kpi">
+                    <span class="stats-kpi-label">Total kostnad</span>
+                    <span class="stats-kpi-value">${totalCost > 0 ? formatAmount(totalCost) : '—'}</span>
+                </div>
+                <div class="stats-kpi">
+                    <span class="stats-kpi-label">Servicetillfällen</span>
+                    <span class="stats-kpi-value">${svcs.length}</span>
+                </div>
+                <div class="stats-kpi">
+                    <span class="stats-kpi-label">Senaste service</span>
+                    <span class="stats-kpi-value">${lastDate ? new Date(lastDate).toLocaleDateString(getLocale()) : '—'}</span>
+                </div>
+            </div>
+
+            <table class="year-table">
+                <thead><tr><th>År</th><th>Antal</th><th>Kostnad</th></tr></thead>
+                <tbody>
+                    ${years.map(yr => `
+                        <tr>
+                            <td>${yr}</td>
+                            <td>${countByYear[yr]}</td>
+                            <td>${byYear[yr] ? formatAmount(byYear[yr]) : '—'}</td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>
+
+            <h2>🔧 Servicetyper</h2>
+            ${topTypes.map(type => {
+                const cost = byType[type] || 0;
+                const count = countByType[type] || 0;
+                const pct = cost > 0 ? Math.round((cost / maxTypeVal) * 100) : 4;
+                return `<div class="type-row">
+                    <span class="type-name">${type}</span>
+                    <div class="type-bar-wrap"><div class="type-bar" style="width:${pct}%"></div></div>
+                    <span class="type-count">${count}×</span>
+                    <span class="type-cost">${cost > 0 ? formatAmount(cost) : '—'}</span>
+                </div>`;
+            }).join('')}
+
             <h2>${t('pdf.historyHeading', services.length)}</h2>
             ${services.map(s => `
                 <div class="service-item ${s.locked ? 'locked' : ''} ${s.performedBy === 'transfer' ? 'transfer' : ''}">
@@ -1321,6 +1425,179 @@ function exportPDF() {
     win.document.write(html);
     win.document.close();
     win.print();
+}
+
+// ─── Stats Modal ──────────────────────────────────────────────────────────────
+function openStatsModal(vehicleId) {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    if (!vehicle) return;
+
+    const svcs = (vehicle.services || []).filter(s => s.performedBy !== 'transfer');
+    const totalCost = svcs.reduce((s, x) => s + (x.cost || 0), 0);
+    const sortedDates = svcs.map(x => x.date).filter(Boolean).sort().reverse();
+    const lastDate = sortedDates[0];
+
+    // KPIs
+    document.getElementById('statsModalTitle').textContent = `📊 ${vehicle.regNumber}`;
+    document.getElementById('statsTotalCost').textContent = totalCost > 0 ? formatAmount(totalCost) : '—';
+    document.getElementById('statsCount').textContent = svcs.length;
+    document.getElementById('statsLatest').textContent = lastDate
+        ? new Date(lastDate).toLocaleDateString(getLocale())
+        : '—';
+
+    // Kostnad + antal per år
+    const byYear = {};
+    const countByYear = {};
+    svcs.forEach(s => {
+        if (!s.date) return;
+        const yr = s.date.split('-')[0];
+        countByYear[yr] = (countByYear[yr] || 0) + 1;
+        if (s.cost) byYear[yr] = (byYear[yr] || 0) + s.cost;
+    });
+    const years = Object.keys(countByYear).sort();
+
+    const chartCanvas = document.getElementById('statsYearChart');
+    if (chartCanvas._chartInstance) {
+        chartCanvas._chartInstance.destroy();
+    }
+    if (years.length > 0) {
+        chartCanvas.style.display = 'block';
+        const maxCost = Math.max(...years.map(y => byYear[y] || 0));
+        // Custom plugin: antal ovanpå stapel, bara om stapeln är tillräckligt hög (>8% av max)
+        const countLabelPlugin = {
+            id: 'countLabels',
+            afterDatasetsDraw(chart) {
+                const { ctx, data, scales: { x, y } } = chart;
+                ctx.save();
+                data.labels.forEach((yr, i) => {
+                    const count = countByYear[yr] || 0;
+                    const cost = byYear[yr] || 0;
+                    const barTop = y.getPixelForValue(cost);
+                    const xPos = x.getPixelForValue(i);
+                    const yPos = Math.min(barTop - 4, y.getPixelForValue(0) - 14);
+                    ctx.font = 'bold 11px Space Mono, monospace';
+                    ctx.fillStyle = '#FFD700';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(count, xPos, yPos);
+                });
+                ctx.restore();
+            }
+        };
+
+        chartCanvas._chartInstance = new Chart(chartCanvas, {
+            type: 'bar',
+            plugins: [countLabelPlugin],
+            data: {
+                labels: years,
+                datasets: [{
+                    label: 'Kostnad',
+                    data: years.map(y => byYear[y] || 0),
+                    backgroundColor: 'rgba(255, 77, 0, 0.7)',
+                    borderColor: '#FF4D00',
+                    borderWidth: 2,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                layout: { padding: { top: 20 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${formatAmount(ctx.raw)}  (${countByYear[years[ctx.dataIndex]]} st)`
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#A0A0A0', font: { family: 'Space Mono' } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: {
+                        ticks: { color: '#A0A0A0', font: { family: 'Space Mono' }, callback: val => formatAmount(val) },
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    }
+                }
+            }
+        });
+    } else {
+        chartCanvas.style.display = 'none';
+    }
+
+    // Topp servicetyper efter kostnad + antal (alla poster, även utan kostnad)
+    const byType = {};
+    const countByType = {};
+    svcs.forEach(s => {
+        if (!s.type) return;
+        countByType[s.type] = (countByType[s.type] || 0) + 1;
+        if (s.cost) byType[s.type] = (byType[s.type] || 0) + s.cost;
+    });
+    // Bygg topplista från ALLA typer (inkl. utan kostnad), sortera på kostnad
+    const topTypes = Object.keys(countByType)
+        .sort((a, b) => (byType[b] || 0) - (byType[a] || 0))
+        .slice(0, 5);
+    const maxVal = byType[topTypes[0]] || 1;
+    document.getElementById('statsTopTypes').innerHTML = topTypes.length > 0
+        ? topTypes.map(type => {
+            const cost = byType[type] || 0;
+            const count = countByType[type] || 0;
+            return `
+            <div class="stats-type-row">
+                <span class="stats-type-name">${type}</span>
+                <div class="stats-type-bar-wrap">
+                    <div class="stats-type-bar" style="width: ${cost > 0 ? Math.round((cost / maxVal) * 100) : 4}%"></div>
+                </div>
+                <span class="stats-type-count">${count}×</span>
+                <span class="stats-type-cost">${cost > 0 ? formatAmount(cost) : '—'}</span>
+            </div>`;
+          }).join('')
+        : '<p style="color: var(--text-secondary); font-size: 0.85rem;">Inga kostnader registrerade</p>';
+
+    openModal('statsModal');
+}
+
+// ─── QR Modal ─────────────────────────────────────────────────────────────────
+async function openQrModal() {
+    const vehicle = vehicles.find(v => v.id === currentVehicleId);
+    if (!vehicle) return;
+
+    // Skapa share-token om den saknas
+    let shareToken = vehicle.shareToken;
+    if (!shareToken) {
+        shareToken = Math.random().toString(36).substr(2, 12) + Date.now().toString(36);
+        const shareExpiry = new Date();
+        shareExpiry.setDate(shareExpiry.getDate() + 30);
+        await updateDoc(doc(db, 'vehicles', currentVehicleId), {
+            shareToken,
+            shareExpiry: shareExpiry.toISOString()
+        });
+        vehicle.shareToken = shareToken;
+    }
+
+    const shareUrl = `${window.location.origin}${window.location.pathname}?share=${shareToken}`;
+    document.getElementById('qrShareUrl').textContent = shareUrl;
+
+    // Rensa och rita QR
+    const qrEl = document.getElementById('qrCode');
+    qrEl.innerHTML = '';
+    new QRCode(qrEl, {
+        text: shareUrl,
+        width: 220,
+        height: 220,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+    });
+
+    openModal('qrModal');
+}
+
+function copyQrLink() {
+    const url = document.getElementById('qrShareUrl').textContent;
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Länk kopierad!');
+    }).catch(() => {
+        document.execCommand('copy');
+    });
 }
 
 // ─── Modal helpers ────────────────────────────────────────────────────────────
@@ -1416,7 +1693,7 @@ function openSwish() {
 // ─── Keyboard / escape ────────────────────────────────────────────────────────
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-        ['addVehicleModal','vehicleDetailsModal','addServiceModal','editVehicleModal','editServiceModal','sellVehicleModal','receiptModal'].forEach(closeModal);
+        ['addVehicleModal','vehicleDetailsModal','addServiceModal','editVehicleModal','editServiceModal','sellVehicleModal','receiptModal','statsModal','qrModal'].forEach(closeModal);
     }
 });
 
@@ -1451,4 +1728,7 @@ window.openModal = openModal;
 window.closeModal = closeModal;
 window.openAddVehicleModal = openAddVehicleModal;
 window.openAddServiceModal = openAddServiceModal;
+window.openStatsModal = openStatsModal;
+window.openQrModal = openQrModal;
+window.copyQrLink = copyQrLink;
 window.currentVehicleId = currentVehicleId;

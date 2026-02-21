@@ -1026,3 +1026,108 @@ body {
     .vt-icon { font-size: 1.3rem; }
     .vt-label { font-size: 0.58rem; }
 }
+
+/* ─── Stats Modal ─────────────────────────────────────────────── */
+.stats-kpi-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+.stats-kpi {
+    flex: 1;
+    min-width: 120px;
+    background: rgba(255,77,0,0.08);
+    border: 1px solid rgba(255,77,0,0.25);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+.stats-kpi-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.stats-kpi-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-yellow);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.stats-section-title {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+.stats-chart-wrap {
+    margin-bottom: 24px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    padding: 16px;
+}
+.stats-top-types {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    padding: 16px;
+}
+.stats-type-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr auto auto;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 0.82rem;
+}
+.stats-type-count {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    text-align: right;
+}
+.stats-type-name {
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.stats-type-bar-wrap {
+    height: 8px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.stats-type-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #FF4D00, #FFD700);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+.stats-type-cost {
+    color: var(--accent-yellow);
+    white-space: nowrap;
+    font-size: 0.78rem;
+}
+
+/* ─── Vehicle card inline stats strip ────────────────────────── */
+.vehicle-stats-strip {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+.vehicle-stats-strip span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
